@@ -377,22 +377,29 @@ vs the fixtures; it is NOT in the blocking CI (network-flaky) — run it manuall
 schedule. **Cross-runtime/bundle smoke** (`pnpm smoke:bundle`) imports the built artifact as
 ESM + CJS + types and drives the browser bundle via Playwright; it **gates release**.
 
-## 9. CI (GitHub Actions) + npm release (Changesets)
+## 9. Quality gates + npm release (manual CLI — see ADR-0009)
 
-CI checks, one workflow each, all required to merge:
-`lint` (+ import-boundary) · `typecheck` · `test` · `build` · `package-validate`
-(`publint` + `attw`) · `bundle-runtime-smoke` (ESM/CJS/types + browser) ·
-`colocated-test-check` · `docs-build` (VitePress builds; README example runs).
-Test across a Node matrix (18 / 20 / 22). No Playwright-per-feature e2e (there is no UI).
+No GitHub Actions run right now (removed per ADR-0009). The gate suite that used to run in CI
+is run **locally, by hand, before every merge and every release** — it is not optional just
+because nothing enforces it automatically:
 
-A **separate scheduled workflow** runs the live-provider smoke (drift detection); it is
-non-blocking and needs provider credentials from CI secrets.
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm pkg:check && pnpm docs:build && pnpm smoke:bundle
+```
 
-**Release** — Changesets. A contributor adds a changeset (`pnpm changeset`) describing the
-change; the Changesets bot opens/updates a "Version Packages" PR that bumps SemVer + writes
-`CHANGELOG.md`; merging it to `main` publishes to npm (`changeset publish`) with an
-`NPM_TOKEN` secret and npm provenance. dist-tags: `latest` (stable) and `next` (pre-release).
-Pre-1.0: MAJOR stays 0, breaking changes bump MINOR.
+That covers: `lint` (+ import-boundary) · `typecheck` · `test` · `build` · `package-validate`
+(`publint` + `attw`) · `docs-build` (VitePress) · `bundle-runtime-smoke` (ESM/CJS/types).
+
+**Release** — Changesets, published from the CLI. A contributor adds a changeset
+(`pnpm changeset`) describing the change; cutting a release is a manual sequence run by the
+maintainer: `pnpm changeset version` (consumes changesets, bumps SemVer, writes
+`CHANGELOG.md`) → `pnpm build` → `npm publish --access public` (npm CLI ≥11.5, logged in
+locally via `npm login`). dist-tags: `latest` (stable) and `next` (pre-release). Pre-1.0:
+MAJOR stays 0, breaking changes bump MINOR.
+
+This is explicitly a **for-now** state (ADR-0009): the removed workflows automated exactly
+this sequence via GitHub Actions + npm OIDC trusted publishing, and can come back the same way
+whenever automation is wanted again.
 
 ## 10. Upstream API docs rule
 
