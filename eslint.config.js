@@ -75,5 +75,25 @@ export default tseslint.config(
     },
   },
 
+  // Import boundary — schema/result/errors are types + pure helpers only: each other,
+  // nothing that does I/O (docs/stack.md §2 import-boundary table).
+  {
+    files: ['src/core/schema.ts', 'src/core/result.ts', 'src/core/errors.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/core/http', '**/core/http.js', './http', './http.js'],
+              message:
+                'core/{schema,result,errors} are types + pure helpers only — never import core/http.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   prettier,
 )
