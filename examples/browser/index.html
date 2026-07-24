@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>quran-api-unified — browser</title>
+  </head>
+  <body>
+    <p id="out">loading…</p>
+    <!-- Loads the ESM build directly. The library is side-effect-free and uses only
+         web-standard APIs (fetch, AbortController), so it runs in the browser as-is. -->
+    <script type="module">
+      import { createQuranClient, builtinAdapters } from '../../dist/index.js'
+
+      // No network: we only exercise the synchronous registry so the demo is deterministic.
+      const client = createQuranClient({ fetch: () => Promise.reject(new Error('offline demo')) })
+      const textProviders = client.listAdapters('text').map((a) => a.id)
+
+      document.body.dataset.adapters = String(textProviders.length)
+      document.getElementById('out').textContent =
+        `Loaded. ${builtinAdapters.length} built-in adapters; text providers: ${textProviders.join(', ')}`
+      document.body.dataset.ready = '1'
+    </script>
+  </body>
+</html>
