@@ -20,3 +20,9 @@ export const QURAN_FINDER_BASE = 'https://api.quran-finder.com'
 
 /** spa5k tafsir_api base — static tafsir JSON over the jsDelivr CDN. */
 export const SPA5K_TAFSIR_BASE = 'https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main'
+
+/** Quran Foundation official content API base (v4), behind OAuth2. */
+export const QURAN_FOUNDATION_CONTENT_BASE = 'https://apis.quran.foundation/content/api/v4'
+
+/** Quran Foundation OAuth2 token endpoint (client-credentials grant). */
+export const QURAN_FOUNDATION_TOKEN_URL = 'https://oauth2.quran.foundation/oauth2/token'

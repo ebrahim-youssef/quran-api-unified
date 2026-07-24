@@ -30,6 +30,10 @@ export interface HttpRequest {
   readonly responseType?: ResponseType
   /** Extra request headers. */
   readonly headers?: Record<string, string>
+  /** HTTP method; defaults to `GET`. */
+  readonly method?: string
+  /** Request body (e.g. a form-encoded OAuth2 token request). */
+  readonly body?: string
 }
 
 /**
@@ -50,7 +54,12 @@ export async function httpFetch(
   try {
     let res: Response
     try {
-      res = await fetchImpl(url, { headers: opts.headers, signal: controller.signal })
+      res = await fetchImpl(url, {
+        signal: controller.signal,
+        ...(opts.method ? { method: opts.method } : {}),
+        ...(opts.headers ? { headers: opts.headers } : {}),
+        ...(opts.body != null ? { body: opts.body } : {}),
+      })
     } catch (cause) {
       const timedOut = controller.signal.aborted
       return {

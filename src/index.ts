@@ -26,6 +26,7 @@ export type {
   AuthKind,
   Capability,
   CapabilityHandler,
+  OAuth2ClientConfig,
   ResponseType,
 } from './ports/adapter.js'
 export type { FetchLike } from './core/http.js'

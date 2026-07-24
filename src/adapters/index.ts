@@ -12,6 +12,7 @@ import { alquranCloud } from './alquran-cloud.js'
 import { quranApiEdge } from './quran-api-edge.js'
 import { quranHub } from './quran-hub.js'
 import { quranFinder } from './quran-finder.js'
+import { quranFoundation } from './quran-foundation.js'
 import { spa5kTafsir } from './spa5k-tafsir.js'
 
 /**
@@ -24,5 +25,6 @@ export const builtinAdapters: readonly Adapter[] = [
   quranApiEdge,
   quranHub,
   quranFinder,
+  quranFoundation,
   spa5kTafsir,
 ]

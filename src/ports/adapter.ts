@@ -40,6 +40,23 @@ export interface AdapterContext {
   readonly credentials?: Readonly<Record<string, string>>
   /** Wraps a URL for a CORS proxy, when one is configured and the handler opts in. */
   readonly proxy?: (url: string) => string
+  /**
+   * A resolved OAuth2 access token, injected by the client for `oauth2-client` adapters before
+   * each call (see {@link Adapter.oauth2}). A handler's `headers` attaches it to the request.
+   */
+  readonly accessToken?: string
+}
+
+/**
+ * OAuth2 client-credentials configuration for an adapter whose `auth` is `'oauth2-client'`. The
+ * client exchanges the caller's `clientId`/`secret` at `tokenUrl` for an access token, caches it,
+ * and injects it as {@link AdapterContext.accessToken}.
+ */
+export interface OAuth2ClientConfig {
+  /** The token endpoint that issues an access token for the client-credentials grant. */
+  readonly tokenUrl: string
+  /** An optional scope to request. */
+  readonly scope?: string
 }
 
 /**
@@ -76,6 +93,8 @@ export interface Adapter {
   readonly capabilities: readonly Capability[]
   /** Credential requirement; defaults to `'none'` (keyless). */
   readonly auth?: AuthKind
+  /** OAuth2 token settings, required when `auth` is `'oauth2-client'`. */
+  readonly oauth2?: OAuth2ClientConfig
   /** Verse-text handler, present when `capabilities` includes `'text'`. */
   readonly text?: CapabilityHandler<VerseQuery, UnifiedVerse>
   /** Audio handler, present when `capabilities` includes `'audio'`. */

@@ -64,6 +64,7 @@ describe('built-in registry — real adapters, fixture-routed fetch', () => {
       'quran_api_edge',
       'quran_hub',
       'quran_finder',
+      'quran_foundation',
     ])
   })
 })

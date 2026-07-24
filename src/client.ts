@@ -9,11 +9,11 @@
  */
 
 import { DEFAULT_TIMEOUT_MS } from './core/constants.js'
-import { createError, throwQuranError } from './core/errors.js'
+import { createError, throwQuranError, type QuranError } from './core/errors.js'
 import { httpFetch, type FetchLike, type HttpDeps } from './core/http.js'
 import { compose, type AttemptOutcome, type ComposeInput } from './core/compose.js'
 import { select, type SourceSelection } from './core/select.js'
-import type { Attempt, GetResult } from './core/result.js'
+import type { Attempt, GetResult, Result } from './core/result.js'
 import type { AudioQuery, Ref, TafsirQuery, TranslationQuery, VerseQuery } from './core/schema.js'
 import type { Adapter, AdapterContext, Capability, CapabilityHandler } from './ports/adapter.js'
 import { builtinAdapters } from './adapters/index.js'
@@ -167,6 +167,63 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
     ...(proxy ? { proxy } : {}),
   })
 
+  // Per-client OAuth2 token cache, keyed by adapter id (client-credentials grant, ADR-0005).
+  const tokenCache = new Map<string, { token: string; expiresAt: number }>()
+
+  async function ensureToken(adapter: Adapter): Promise<Result<string, QuranError>> {
+    const creds = credentials[adapter.id]
+    // A caller may supply a ready token directly, skipping the exchange.
+    if (creds?.accessToken) return { ok: true, value: creds.accessToken }
+    if (!adapter.oauth2 || !creds?.clientId || !creds?.secret) {
+      return {
+        ok: false,
+        error: createError(
+          'credentials_required',
+          `adapter "${adapter.id}" requires clientId and secret`,
+          { adapterId: adapter.id },
+        ),
+      }
+    }
+    const cached = tokenCache.get(adapter.id)
+    if (cached && cached.expiresAt > Date.now()) return { ok: true, value: cached.token }
+
+    const basic = btoa(`${creds.clientId}:${creds.secret}`)
+    const scope = adapter.oauth2.scope
+    const res = await httpFetch(adapter.oauth2.tokenUrl, deps, {
+      method: 'POST',
+      body: `grant_type=client_credentials${scope ? `&scope=${encodeURIComponent(scope)}` : ''}`,
+      headers: {
+        authorization: `Basic ${basic}`,
+        'content-type': 'application/x-www-form-urlencoded',
+        accept: 'application/json',
+      },
+    })
+    if (!res.ok) return res
+    const data = res.value as { access_token?: string; expires_in?: number }
+    if (!data.access_token) {
+      return {
+        ok: false,
+        error: createError(
+          'configuration',
+          `token endpoint for "${adapter.id}" returned no access_token`,
+          { adapterId: adapter.id },
+        ),
+      }
+    }
+    const ttlMs = (data.expires_in ?? 3600) * 1000
+    tokenCache.set(adapter.id, { token: data.access_token, expiresAt: Date.now() + ttlMs - 30_000 })
+    return { ok: true, value: data.access_token }
+  }
+
+  /** Builds the adapter context, exchanging credentials for an OAuth2 token when required. */
+  async function authContextFor(adapter: Adapter): Promise<Result<AdapterContext, QuranError>> {
+    const ctx = contextFor(adapter)
+    if (adapter.auth !== 'oauth2-client') return { ok: true, value: ctx }
+    const token = await ensureToken(adapter)
+    if (!token.ok) return token
+    return { ok: true, value: { ...ctx, accessToken: token.value } }
+  }
+
   async function get(req: GetRequest): Promise<GetResult> {
     if (req.include.length === 0) {
       throwQuranError(
@@ -175,6 +232,17 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
     }
     const adapters = [...registry.values()]
     const captureRaw = req.includeRaw === true
+
+    // Resolves the (possibly OAuth2-authenticated) context, then runs one attempt.
+    const runWithAuth = async <Q, R>(
+      handler: CapabilityHandler<Q, R>,
+      adapter: Adapter,
+      q: Q,
+    ): Promise<AttemptOutcome<R>> => {
+      const authed = await authContextFor(adapter)
+      if (!authed.ok) return { result: authed }
+      return runAttempt(handler, adapter, q, authed.value, deps, captureRaw)
+    }
 
     const plan: ComposeInput = { ref: req.ref }
     const mutablePlan = plan as {
@@ -200,7 +268,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.text
               if (!handler) return Promise.resolve(missingHandler(adapter, 'text'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
+              return runWithAuth(handler, adapter, q)
             },
           }
           break
@@ -216,7 +284,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.audio
               if (!handler) return Promise.resolve(missingHandler(adapter, 'audio'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
+              return runWithAuth(handler, adapter, q)
             },
           }
           break
@@ -232,7 +300,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.translation
               if (!handler) return Promise.resolve(missingHandler(adapter, 'translation'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
+              return runWithAuth(handler, adapter, q)
             },
           }
           break
@@ -248,7 +316,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.tafsir
               if (!handler) return Promise.resolve(missingHandler(adapter, 'tafsir'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
+              return runWithAuth(handler, adapter, q)
             },
           }
           break
