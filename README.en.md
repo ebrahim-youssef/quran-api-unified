@@ -7,7 +7,8 @@ audio, translation, and tafsir — behind a single interface and one normalized 
 automatic provider selection and fallback when a source is unavailable, so your app is never
 locked to a single provider.
 
-> **Under development.** Not yet published to npm; the examples below describe the intended API.
+> **Pre-release.** The library is implemented and passing its full test suite across all four
+> content types; it is not yet published to npm.
 
 ## What it is
 
@@ -33,6 +34,9 @@ which source served it.
 - **An extensible adapter system**: every provider has its own adapter, and you can register
   your own.
 - **Keyless by default**, with optional credential support for providers that require it.
+- **Raw passthrough (opt-in)**: ask for `includeRaw: true` and each result also carries the
+  provider's original, un-normalized response next to the unified one — for debugging or a
+  raw-vs-unified comparison.
 - **Runs everywhere**: Node, browsers, Deno, and Bun; ESM and CJS; full TypeScript types.
 
 ## Install
