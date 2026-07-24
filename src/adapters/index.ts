@@ -12,6 +12,7 @@ import { alquranCloud } from './alquran-cloud.js'
 import { quranApiEdge } from './quran-api-edge.js'
 import { quranHub } from './quran-hub.js'
 import { quranFinder } from './quran-finder.js'
+import { spa5kTafsir } from './spa5k-tafsir.js'
 
 /**
  * The built-in provider adapters, in default preference order. Auto-selection tries them in
@@ -23,4 +24,5 @@ export const builtinAdapters: readonly Adapter[] = [
   quranApiEdge,
   quranHub,
   quranFinder,
+  spa5kTafsir,
 ]

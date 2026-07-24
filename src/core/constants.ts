@@ -17,3 +17,6 @@ export const QURAN_HUB_BASE = 'https://api.quranhub.com/v1'
 
 /** Quran Explorer (Quran Finder) base — raw-text ayah endpoint. */
 export const QURAN_FINDER_BASE = 'https://api.quran-finder.com'
+
+/** spa5k tafsir_api base — static tafsir JSON over the jsDelivr CDN. */
+export const SPA5K_TAFSIR_BASE = 'https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main'
