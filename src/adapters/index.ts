@@ -8,6 +8,19 @@
  * ESLint; see `eslint.config.js`.
  */
 import type { Adapter } from '../ports/adapter.js'
+import { alquranCloud } from './alquran-cloud.js'
+import { quranApiEdge } from './quran-api-edge.js'
+import { quranHub } from './quran-hub.js'
+import { quranFinder } from './quran-finder.js'
 
-/** The built-in provider adapters, in preference order. Empty until adapters land (#7+). */
-export const builtinAdapters: readonly Adapter[] = []
+/**
+ * The built-in provider adapters, in default preference order. Auto-selection tries them in
+ * this order per concern, falling back on failure. Al-Quran Cloud leads for text (open, broad,
+ * stable); the edge API is a fast second; Quran Hub and Quran Explorer round out the fallback.
+ */
+export const builtinAdapters: readonly Adapter[] = [
+  alquranCloud,
+  quranApiEdge,
+  quranHub,
+  quranFinder,
+]

@@ -18,6 +18,7 @@ describe('createQuranClient — construction', () => {
 
   it('listAdapters filters by capability', () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({}),
       adapters: [makeAdapter('t', ['text']), makeAdapter('a', ['audio'])],
     })
@@ -29,6 +30,7 @@ describe('createQuranClient — construction', () => {
 describe('get — composition and fallback', () => {
   it('composes a requested concern from a working provider', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body: { text: 'بسم الله' } } }),
       adapters: [makeAdapter('a', ['text'])],
     })
@@ -43,6 +45,7 @@ describe('get — composition and fallback', () => {
 
   it('falls back to the next provider when the first returns an HTTP error', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({
         [url('a', 'text')]: { kind: 'http', status: 500 },
         [url('b', 'text')]: { kind: 'ok', body: { text: 'from b' } },
@@ -59,6 +62,7 @@ describe('get — composition and fallback', () => {
 
   it('returns partial results: one concern succeeds while another fails', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({
         [url('a', 'text')]: { kind: 'ok', body: { text: 'ok text' } },
         [url('a', 'audio')]: { kind: 'network' },
@@ -78,6 +82,7 @@ describe('get — composition and fallback', () => {
 
   it('reports ok:false with all_failed when no concern can be served', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'http', status: 503 } }),
       adapters: [makeAdapter('a', ['text'])],
     })
@@ -100,6 +105,7 @@ describe('get — raw passthrough (ADR-0010)', () => {
 
   it('omits Part.raw by default', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
       adapters: [makeAdapter('a', ['text'])],
     })
@@ -109,6 +115,7 @@ describe('get — raw passthrough (ADR-0010)', () => {
 
   it('attaches the original provider body on Part.raw when includeRaw is true', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
       adapters: [makeAdapter('a', ['text'])],
     })
@@ -123,6 +130,7 @@ describe('get — raw passthrough (ADR-0010)', () => {
 
   it('does not attach raw to a failed concern', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'http', status: 500 } }),
       adapters: [makeAdapter('a', ['text'])],
     })
@@ -134,6 +142,7 @@ describe('get — raw passthrough (ADR-0010)', () => {
 describe('get — custom + credentialed adapters', () => {
   it('registerAdapter makes a custom adapter selectable, including in the fallback chain', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({
         [url('builtinish', 'text')]: { kind: 'http', status: 500 },
         [url('custom', 'text')]: { kind: 'ok', body: { text: 'from custom' } },
@@ -152,6 +161,7 @@ describe('get — custom + credentialed adapters', () => {
 
   it('skips a credentialed adapter in auto-selection when creds are absent', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('free', 'text')]: { kind: 'ok', body: { text: 'free' } } }),
       adapters: [makeAdapter('keyed', ['text'], 'apiKey'), makeAdapter('free', ['text'])],
     })
@@ -164,6 +174,7 @@ describe('get — custom + credentialed adapters', () => {
 
   it('uses a credentialed adapter once its credentials are supplied', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({ [url('keyed', 'text')]: { kind: 'ok', body: { text: 'keyed' } } }),
       adapters: [makeAdapter('keyed', ['text'], 'apiKey')],
       credentials: { keyed: { apiKey: 'secret' } },
@@ -174,6 +185,7 @@ describe('get — custom + credentialed adapters', () => {
 
   it('throws adapter_not_found (misuse) for an explicitly named unknown source', async () => {
     const client = createQuranClient({
+      useBuiltins: false,
       fetch: makeFetch({}),
       adapters: [makeAdapter('a', ['text'])],
     })

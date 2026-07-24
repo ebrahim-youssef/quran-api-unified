@@ -29,8 +29,13 @@ export interface ClientOptions {
   readonly timeoutMs?: number
   /** CORS proxy for adapters that opt in via `useProxy`. Disabled by default. */
   readonly proxy?: ProxyOption
-  /** Extra adapters to register on top of the built-ins (override built-ins by id). */
+  /** Extra adapters to register on top of the base set (override by id). */
   readonly adapters?: readonly Adapter[]
+  /**
+   * Start from the built-in adapters (default `true`). Set `false` to use *only* the adapters
+   * you pass in `adapters` — for a curated provider set, or to isolate a test.
+   */
+  readonly useBuiltins?: boolean
   /** Credentials per adapter id, e.g. `{ quran_foundation: { clientId, secret } }`. */
   readonly credentials?: Readonly<Record<string, Readonly<Record<string, string>>>>
 }
@@ -148,7 +153,8 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
   const proxy = resolveProxy(options.proxy)
   const credentials = options.credentials ?? {}
 
-  const registry = new Map<string, Adapter>(builtinAdapters.map((a) => [a.id, a]))
+  const base = options.useBuiltins === false ? [] : builtinAdapters
+  const registry = new Map<string, Adapter>(base.map((a) => [a.id, a]))
   for (const adapter of options.adapters ?? []) registry.set(adapter.id, adapter)
 
   const hasCredentials = (id: string): boolean => {
