@@ -7,4 +7,7 @@
  * Nothing here may import `core/http` — not even for types — nor the client. Enforced by
  * ESLint; see `eslint.config.js`.
  */
-export const builtinAdapters: readonly never[] = []
+import type { Adapter } from '../ports/adapter.js'
+
+/** The built-in provider adapters, in preference order. Empty until adapters land (#7+). */
+export const builtinAdapters: readonly Adapter[] = []
