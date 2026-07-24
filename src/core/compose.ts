@@ -26,6 +26,8 @@ import type { Adapter } from '../ports/adapter.js'
 export interface AttemptOutcome<R> {
   readonly result: Result<R, QuranError>
   readonly durationMs?: number
+  /** The provider's original response body, when the caller requested raw passthrough (ADR-0010). */
+  readonly raw?: unknown
 }
 
 /** Everything needed to run one concern's fallback chain. */
@@ -51,7 +53,7 @@ export interface ComposeInput {
 async function runChain<Q, R>(exec: ConcernExecution<Q, R>): Promise<Part<R>> {
   const attempts: Attempt[] = []
   for (const adapter of exec.candidates) {
-    const { result, durationMs } = await exec.attempt(adapter, exec.query)
+    const { result, durationMs, raw } = await exec.attempt(adapter, exec.query)
     const attempt: Attempt = {
       adapterId: adapter.id,
       ok: result.ok,
@@ -59,7 +61,7 @@ async function runChain<Q, R>(exec: ConcernExecution<Q, R>): Promise<Part<R>> {
       ...(durationMs == null ? {} : { durationMs }),
     }
     attempts.push(attempt)
-    if (result.ok) return okPart(result.value, adapter.id, attempts)
+    if (result.ok) return okPart(result.value, adapter.id, attempts, raw)
   }
   const error =
     attempts.length > 0

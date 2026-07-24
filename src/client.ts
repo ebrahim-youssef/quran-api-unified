@@ -49,6 +49,12 @@ export interface GetRequest {
   readonly tafsirId?: string
   /** Explicit source overrides per concern; unset concerns auto-select. */
   readonly source?: Partial<Record<Capability, SourceSelection>>
+  /**
+   * When true, each successful concern carries the provider's original response body on
+   * `Part.raw`, alongside the unified `value` (ADR-0010). Off by default. Useful for
+   * debugging and for showing raw-vs-unified side by side.
+   */
+  readonly includeRaw?: boolean
 }
 
 /** The client returned by {@link createQuranClient}. */
@@ -90,6 +96,7 @@ async function runAttempt<Q, R>(
   query: Q,
   ctx: AdapterContext,
   deps: HttpDeps,
+  captureRaw: boolean,
 ): Promise<AttemptOutcome<R>> {
   const started = now()
   let url = handler.buildUrl(query, ctx)
@@ -102,7 +109,11 @@ async function runAttempt<Q, R>(
   const durationMs = now() - started
   if (!res.ok) return { result: res, durationMs }
   try {
-    return { result: { ok: true, value: handler.transform(res.value, query, ctx) }, durationMs }
+    return {
+      result: { ok: true, value: handler.transform(res.value, query, ctx) },
+      durationMs,
+      ...(captureRaw ? { raw: res.value } : {}),
+    }
   } catch (cause) {
     return {
       result: {
@@ -157,6 +168,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
       )
     }
     const adapters = [...registry.values()]
+    const captureRaw = req.includeRaw === true
 
     const plan: ComposeInput = { ref: req.ref }
     const mutablePlan = plan as {
@@ -182,7 +194,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.text
               if (!handler) return Promise.resolve(missingHandler(adapter, 'text'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps)
+              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
             },
           }
           break
@@ -198,7 +210,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.audio
               if (!handler) return Promise.resolve(missingHandler(adapter, 'audio'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps)
+              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
             },
           }
           break
@@ -214,7 +226,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.translation
               if (!handler) return Promise.resolve(missingHandler(adapter, 'translation'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps)
+              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
             },
           }
           break
@@ -230,7 +242,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
             attempt: (adapter, q) => {
               const handler = adapter.tafsir
               if (!handler) return Promise.resolve(missingHandler(adapter, 'tafsir'))
-              return runAttempt(handler, adapter, q, contextFor(adapter), deps)
+              return runAttempt(handler, adapter, q, contextFor(adapter), deps, captureRaw)
             },
           }
           break

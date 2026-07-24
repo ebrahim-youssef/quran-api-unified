@@ -95,6 +95,42 @@ describe('get — composition and fallback', () => {
   })
 })
 
+describe('get — raw passthrough (ADR-0010)', () => {
+  const body = { text: 'raw text', number: 42 }
+
+  it('omits Part.raw by default', async () => {
+    const client = createQuranClient({
+      fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
+      adapters: [makeAdapter('a', ['text'])],
+    })
+    const res = await client.get({ ref, include: ['text'] })
+    expect(res.ok && res.value.text?.raw).toBeUndefined()
+  })
+
+  it('attaches the original provider body on Part.raw when includeRaw is true', async () => {
+    const client = createQuranClient({
+      fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
+      adapters: [makeAdapter('a', ['text'])],
+    })
+    const res = await client.get({ ref, include: ['text'], includeRaw: true })
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      // Unified value and raw body sit side by side.
+      expect(res.value.text?.value?.text).toBe('raw text')
+      expect(res.value.text?.raw).toEqual(body)
+    }
+  })
+
+  it('does not attach raw to a failed concern', async () => {
+    const client = createQuranClient({
+      fetch: makeFetch({ [url('a', 'text')]: { kind: 'http', status: 500 } }),
+      adapters: [makeAdapter('a', ['text'])],
+    })
+    const res = await client.get({ ref, include: ['text'], includeRaw: true })
+    expect(res.ok).toBe(false)
+  })
+})
+
 describe('get — custom + credentialed adapters', () => {
   it('registerAdapter makes a custom adapter selectable, including in the fallback chain', async () => {
     const client = createQuranClient({

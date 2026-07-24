@@ -40,13 +40,27 @@ export interface Part<T> {
   readonly error?: QuranError
   /** The adapter id that served this concern, when `ok` is true. */
   readonly source?: string
+  /**
+   * The provider's original, un-normalized response body — the exact value the adapter's
+   * `transform` received. Present only when the caller requested it via `includeRaw`
+   * (ADR-0010); absent otherwise, so results stay lean by default.
+   */
+  readonly raw?: unknown
   /** Every provider tried for this concern, in order. */
   readonly attempts: readonly Attempt[]
 }
 
-/** Builds a successful {@link Part}. Pure — never throws, never performs I/O. */
-export function okPart<T>(value: T, source: string, attempts: readonly Attempt[]): Part<T> {
-  return { ok: true, value, source, attempts }
+/**
+ * Builds a successful {@link Part}. Pure — never throws, never performs I/O. Pass `raw` to
+ * attach the provider's original response body (opt-in raw passthrough, ADR-0010).
+ */
+export function okPart<T>(
+  value: T,
+  source: string,
+  attempts: readonly Attempt[],
+  raw?: unknown,
+): Part<T> {
+  return { ok: true, value, source, attempts, ...(raw === undefined ? {} : { raw }) }
 }
 
 /** Builds a failed {@link Part}. Pure — never throws, never performs I/O. */
