@@ -56,9 +56,9 @@ function credentialsSatisfied(
  */
 export function select(input: SelectInput): Result<readonly Adapter[], QuranError> {
   const { capability, adapters, source, hasCredentials } = input
-  const byId = new Map(adapters.map((a) => [a.id, a]))
 
   if (source) {
+    const byId = new Map(adapters.map((a) => [a.id, a]))
     const ids = [source.id, ...(source.fallback ?? [])]
     const resolved: Adapter[] = []
     const seen = new Set<string>()

@@ -6,8 +6,11 @@
  * not a whole-call failure) — the client already handles that via partial results.
  */
 
-import { SPA5K_TAFSIR_BASE } from '../core/constants.js'
 import type { Adapter } from '../ports/adapter.js'
+import { verseKey } from './shared.js'
+
+/** spa5k tafsir_api base — static tafsir JSON over the jsDelivr CDN. */
+const SPA5K_TAFSIR_BASE = 'https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main'
 
 /** A well-known Arabic tafsir edition, used when the caller names none. */
 const DEFAULT_TAFSIR = 'ar-tafsir-ibn-kathir'
@@ -41,7 +44,7 @@ export const spa5kTafsir: Adapter = {
       const r = raw as Spa5kTafsirResponse
       const tafsirId = q.tafsirId ?? DEFAULT_TAFSIR
       return {
-        key: `${r.surah}:${r.ayah}`,
+        key: verseKey(r.surah, r.ayah),
         surah: r.surah,
         ayah: r.ayah,
         source: 'Tafsir API (spa5k)',

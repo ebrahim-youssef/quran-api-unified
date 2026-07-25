@@ -82,18 +82,6 @@ function now(): number {
   return typeof performance !== 'undefined' ? performance.now() : 0
 }
 
-/** Defensive outcome for the unreachable case where a selected adapter lacks its handler. */
-function missingHandler(adapter: Adapter, capability: Capability): AttemptOutcome<never> {
-  return {
-    result: {
-      ok: false,
-      error: createError('all_failed', `adapter "${adapter.id}" has no ${capability} handler`, {
-        adapterId: adapter.id,
-      }),
-    },
-  }
-}
-
 /** Runs one adapter attempt: build the URL, fetch, then transform. Never throws. */
 async function runAttempt<Q, R>(
   handler: CapabilityHandler<Q, R>,
@@ -156,6 +144,8 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
   const base = options.useBuiltins === false ? [] : builtinAdapters
   const registry = new Map<string, Adapter>(base.map((a) => [a.id, a]))
   for (const adapter of options.adapters ?? []) registry.set(adapter.id, adapter)
+  // Snapshot rebuilt only on registration, so get()/listAdapters() don't re-copy it per call.
+  let adapterList: readonly Adapter[] = [...registry.values()]
 
   const hasCredentials = (id: string): boolean => {
     const c = credentials[id]
@@ -230,7 +220,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
         createError('configuration', 'get() requires at least one concern in include'),
       )
     }
-    const adapters = [...registry.values()]
+    const adapters = adapterList
     const captureRaw = req.includeRaw === true
 
     // Resolves the (possibly OAuth2-authenticated) context, then runs one attempt.
@@ -265,11 +255,8 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
           mutablePlan.text = {
             candidates,
             query,
-            attempt: (adapter, q) => {
-              const handler = adapter.text
-              if (!handler) return Promise.resolve(missingHandler(adapter, 'text'))
-              return runWithAuth(handler, adapter, q)
-            },
+            // select() only returns adapters that serve `capability`, so the handler exists.
+            attempt: (adapter, q) => runWithAuth(adapter.text!, adapter, q),
           }
           break
         }
@@ -281,11 +268,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
           mutablePlan.audio = {
             candidates,
             query,
-            attempt: (adapter, q) => {
-              const handler = adapter.audio
-              if (!handler) return Promise.resolve(missingHandler(adapter, 'audio'))
-              return runWithAuth(handler, adapter, q)
-            },
+            attempt: (adapter, q) => runWithAuth(adapter.audio!, adapter, q),
           }
           break
         }
@@ -297,11 +280,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
           mutablePlan.translation = {
             candidates,
             query,
-            attempt: (adapter, q) => {
-              const handler = adapter.translation
-              if (!handler) return Promise.resolve(missingHandler(adapter, 'translation'))
-              return runWithAuth(handler, adapter, q)
-            },
+            attempt: (adapter, q) => runWithAuth(adapter.translation!, adapter, q),
           }
           break
         }
@@ -313,11 +292,7 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
           mutablePlan.tafsir = {
             candidates,
             query,
-            attempt: (adapter, q) => {
-              const handler = adapter.tafsir
-              if (!handler) return Promise.resolve(missingHandler(adapter, 'tafsir'))
-              return runWithAuth(handler, adapter, q)
-            },
+            attempt: (adapter, q) => runWithAuth(adapter.tafsir!, adapter, q),
           }
           break
         }
@@ -340,13 +315,13 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
   }
 
   function listAdapters(capability?: Capability): readonly Adapter[] {
-    const all = [...registry.values()]
-    if (!capability) return all
-    return all.filter((a) => a.capabilities.includes(capability) && a[capability] != null)
+    if (!capability) return adapterList
+    return adapterList.filter((a) => a.capabilities.includes(capability) && a[capability] != null)
   }
 
   function registerAdapter(adapter: Adapter): QuranClient {
     registry.set(adapter.id, adapter)
+    adapterList = [...registry.values()]
     return api
   }
 

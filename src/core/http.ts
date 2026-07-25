@@ -36,6 +36,48 @@ export interface HttpRequest {
   readonly body?: string
 }
 
+function requestInit(opts: HttpRequest, signal: AbortSignal): RequestInit {
+  return {
+    signal,
+    ...(opts.method ? { method: opts.method } : {}),
+    ...(opts.headers ? { headers: opts.headers } : {}),
+    ...(opts.body != null ? { body: opts.body } : {}),
+  }
+}
+
+function networkErrorResult(
+  url: string,
+  timeoutMs: number,
+  timedOut: boolean,
+  cause: unknown,
+): Result<never, QuranError> {
+  return {
+    ok: false,
+    error: createError(
+      timedOut ? 'provider_timeout' : 'provider_network',
+      timedOut
+        ? `Request to ${url} timed out after ${timeoutMs}ms`
+        : `Network error requesting ${url}`,
+      { cause },
+    ),
+  }
+}
+
+function parseErrorResult(
+  url: string,
+  responseType: ResponseType | undefined,
+  cause: unknown,
+): Result<never, QuranError> {
+  return {
+    ok: false,
+    error: createError(
+      'provider_parse',
+      `Failed to parse ${responseType ?? 'json'} response from ${url}`,
+      { cause },
+    ),
+  }
+}
+
 /**
  * Fetches `url` with a timeout and reads the body as JSON (default) or text. Every failure —
  * timeout, network error, non-2xx status, or a body that won't parse — resolves to
@@ -54,24 +96,9 @@ export async function httpFetch(
   try {
     let res: Response
     try {
-      res = await fetchImpl(url, {
-        signal: controller.signal,
-        ...(opts.method ? { method: opts.method } : {}),
-        ...(opts.headers ? { headers: opts.headers } : {}),
-        ...(opts.body != null ? { body: opts.body } : {}),
-      })
+      res = await fetchImpl(url, requestInit(opts, controller.signal))
     } catch (cause) {
-      const timedOut = controller.signal.aborted
-      return {
-        ok: false,
-        error: createError(
-          timedOut ? 'provider_timeout' : 'provider_network',
-          timedOut
-            ? `Request to ${url} timed out after ${timeoutMs}ms`
-            : `Network error requesting ${url}`,
-          { cause },
-        ),
-      }
+      return networkErrorResult(url, timeoutMs, controller.signal.aborted, cause)
     }
 
     if (!res.ok) {
@@ -87,14 +114,7 @@ export async function httpFetch(
       const value = opts.responseType === 'text' ? await res.text() : await res.json()
       return { ok: true, value }
     } catch (cause) {
-      return {
-        ok: false,
-        error: createError(
-          'provider_parse',
-          `Failed to parse ${opts.responseType ?? 'json'} response from ${url}`,
-          { cause },
-        ),
-      }
+      return parseErrorResult(url, opts.responseType, cause)
     }
   } finally {
     clearTimeout(timer)

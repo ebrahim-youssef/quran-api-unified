@@ -3,8 +3,11 @@
  * one JSON file. Keyless. See `docs/providers/quran-api-edge.md`. Declarative and pure.
  */
 
-import { QURAN_API_EDGE_BASE } from '../core/constants.js'
 import type { Adapter } from '../ports/adapter.js'
+import { verseKey } from './shared.js'
+
+/** Quran API (Edge) base — one JSON file per ayah carries text + audio. */
+const QURAN_API_EDGE_BASE = 'https://quranapi.pages.dev/api'
 
 /** One reciter entry in the Edge `audio` map. */
 interface EdgeAudioEntry {
@@ -46,7 +49,7 @@ export const quranApiEdge: Adapter = {
     transform: (raw) => {
       const r = raw as EdgeAyahResponse
       return {
-        key: `${r.surahNo}:${r.ayahNo}`,
+        key: verseKey(r.surahNo, r.ayahNo),
         surah: r.surahNo,
         ayah: r.ayahNo,
         source: 'Quran API (Edge)',
@@ -61,7 +64,7 @@ export const quranApiEdge: Adapter = {
       const r = raw as EdgeAyahResponse
       const picked = pickAudio(r.audio ?? {}, q.reciter)
       return {
-        key: `${r.surahNo}:${r.ayahNo}`,
+        key: verseKey(r.surahNo, r.ayahNo),
         surah: r.surahNo,
         ayah: r.ayahNo,
         scope: 'ayah',

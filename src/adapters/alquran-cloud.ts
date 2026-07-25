@@ -4,8 +4,11 @@
  * maps the response; it never fetches (ADR-0002).
  */
 
-import { ALQURAN_CLOUD_BASE } from '../core/constants.js'
 import type { Adapter } from '../ports/adapter.js'
+import { verseKey } from './shared.js'
+
+/** Al-Quran Cloud API base (text, audio, translation). */
+const ALQURAN_CLOUD_BASE = 'https://api.alquran.cloud/v1'
 
 /** The default recitation edition used when the caller names no reciter. */
 const DEFAULT_RECITER = 'ar.alafasy'
@@ -54,11 +57,11 @@ export const alquranCloud: Adapter = {
   capabilities: ['text', 'audio', 'translation'],
   auth: 'none',
   text: {
-    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${q.surah}:${q.ayah ?? 1}`,
+    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}`,
     transform: (raw) => {
       const { data } = raw as AqcAyahResponse
       return {
-        key: `${data.surah.number}:${data.numberInSurah}`,
+        key: verseKey(data.surah.number, data.numberInSurah),
         surah: data.surah.number,
         ayah: data.numberInSurah,
         source: 'Al-Quran Cloud',
@@ -69,11 +72,11 @@ export const alquranCloud: Adapter = {
   },
   audio: {
     buildUrl: (q) =>
-      `${ALQURAN_CLOUD_BASE}/ayah/${q.surah}:${q.ayah ?? 1}/${q.reciter ?? DEFAULT_RECITER}`,
+      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}/${q.reciter ?? DEFAULT_RECITER}`,
     transform: (raw, q) => {
       const { data } = raw as AqcAudioResponse
       return {
-        key: `${data.surah.number}:${data.numberInSurah}`,
+        key: verseKey(data.surah.number, data.numberInSurah),
         surah: data.surah.number,
         ayah: data.numberInSurah,
         scope: 'ayah',
@@ -87,11 +90,11 @@ export const alquranCloud: Adapter = {
   },
   translation: {
     buildUrl: (q) =>
-      `${ALQURAN_CLOUD_BASE}/ayah/${q.surah}:${q.ayah ?? 1}/${q.edition ?? DEFAULT_TRANSLATION}`,
+      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}/${q.edition ?? DEFAULT_TRANSLATION}`,
     transform: (raw, q) => {
       const { data } = raw as AqcTranslationResponse
       return {
-        key: `${data.surah.number}:${data.numberInSurah}`,
+        key: verseKey(data.surah.number, data.numberInSurah),
         surah: data.surah.number,
         ayah: data.numberInSurah,
         source: 'Al-Quran Cloud',

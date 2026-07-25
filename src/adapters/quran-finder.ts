@@ -5,13 +5,11 @@
  * `docs/providers/quran-finder.md`.
  */
 
-import { QURAN_FINDER_BASE } from '../core/constants.js'
 import type { Adapter } from '../ports/adapter.js'
+import { stripBom, verseKey } from './shared.js'
 
-/** Strips a leading byte-order mark (U+FEFF), which this provider prefixes onto the text. */
-function stripBom(s: string): string {
-  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s
-}
+/** Quran Explorer (Quran Finder) base — raw-text ayah endpoint. */
+const QURAN_FINDER_BASE = 'https://api.quran-finder.com'
 
 /** Quran Explorer (`quran_finder`) — raw-text verse via `GET /text/ar/{surah}/{ayah}/`. */
 export const quranFinder: Adapter = {
@@ -27,7 +25,7 @@ export const quranFinder: Adapter = {
     transform: (raw, q) => {
       const ayah = q.ayah ?? 1
       return {
-        key: `${q.surah}:${ayah}`,
+        key: verseKey(q.surah, ayah),
         surah: q.surah,
         ayah,
         source: 'Quran Explorer',

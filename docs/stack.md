@@ -138,7 +138,8 @@ export interface Adapter {
 
 ```ts
 import type { Adapter } from '../ports/adapter.js'
-import { ALQURAN_CLOUD_BASE } from '../core/constants.js'
+
+const ALQURAN_CLOUD_BASE = 'https://api.alquran.cloud/v1' // adapter-private, not core/constants.js
 
 export const alquranCloud: Adapter = {
   id: 'alquran_cloud',
