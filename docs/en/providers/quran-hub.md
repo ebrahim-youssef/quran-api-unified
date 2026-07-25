@@ -1,6 +1,6 @@
 # Quran Hub — provider reference
 
-[العربية](./quran-hub.md) · **English**
+[العربية](/providers/quran-hub) · **English**
 
 - **Id:** `quran_hub` · **Adapter file:** `src/adapters/quran-hub.ts`
 - **Homepage:** https://quranhub.app

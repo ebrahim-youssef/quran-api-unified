@@ -1,6 +1,6 @@
 # Tafsir API (spa5k) — مرجع المزوّد
 
-**العربية** · [English](./spa5k-tafsir.en.md)
+**العربية** · [English](/en/providers/spa5k-tafsir)
 
 - **المعرّف:** `spa5k_tafsir` · **ملف المُحوّل:** `src/adapters/spa5k-tafsir.ts`
 - **الصفحة الرئيسية:** https://github.com/spa5k/tafsir_api

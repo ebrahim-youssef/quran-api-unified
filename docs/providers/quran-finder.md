@@ -1,6 +1,6 @@
 # Quran Explorer (Quran Finder) — مرجع المزوّد
 
-**العربية** · [English](./quran-finder.en.md)
+**العربية** · [English](/en/providers/quran-finder)
 
 - **المعرّف:** `quran_finder` · **ملف المُحوّل:** `src/adapters/quran-finder.ts`
 - **الصفحة الرئيسية:** https://quran-finder.com

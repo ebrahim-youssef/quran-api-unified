@@ -1,6 +1,6 @@
 # Quran API (Edge) — مرجع المزوّد
 
-**العربية** · [English](./quran-api-edge.en.md)
+**العربية** · [English](/en/providers/quran-api-edge)
 
 - **المعرّف:** `quran_api_edge` · **ملف المُحوّل:** `src/adapters/quran-api-edge.ts`
 - **الصفحة الرئيسية:** https://quranapi.pages.dev

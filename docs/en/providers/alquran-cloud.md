@@ -1,6 +1,6 @@
 # Al-Quran Cloud — provider reference
 
-[العربية](./alquran-cloud.md) · **English**
+[العربية](/providers/alquran-cloud) · **English**
 
 - **Id:** `alquran_cloud` · **Adapter file:** `src/adapters/alquran-cloud.ts`
 - **Homepage / docs:** https://alquran.cloud/api

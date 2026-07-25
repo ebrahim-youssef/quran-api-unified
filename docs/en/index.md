@@ -141,7 +141,7 @@ typo or a wrong assumption should surface immediately rather than fail silently.
 ## Credentials
 
 Keyless providers need nothing. A credentialed provider (currently
-[Quran Foundation](/providers/quran-foundation.en), OAuth2 client-credentials) is configured
+[Quran Foundation](/en/providers/quran-foundation), OAuth2 client-credentials) is configured
 per adapter id when you create the client:
 
 ```ts
@@ -274,12 +274,12 @@ In an environment with no global `fetch`, pass one explicitly via `createQuranCl
 Each built-in provider has a reference page with its upstream API and why the adapter maps it
 the way it does:
 
-- [Quran Foundation](/providers/quran-foundation.en) — text, OAuth2
-- [Al-Quran Cloud](/providers/alquran-cloud.en) — text, audio, translation
-- [Quran API (Edge)](/providers/quran-api-edge.en) — text, audio
-- [Quran Hub](/providers/quran-hub.en) — text, via proxy
-- [Quran Explorer](/providers/quran-finder.en) — text, via proxy
-- [Tafsir API (spa5k)](/providers/spa5k-tafsir.en) — tafsir
+- [Quran Foundation](/en/providers/quran-foundation) — text, OAuth2
+- [Al-Quran Cloud](/en/providers/alquran-cloud) — text, audio, translation
+- [Quran API (Edge)](/en/providers/quran-api-edge) — text, audio
+- [Quran Hub](/en/providers/quran-hub) — text, via proxy
+- [Quran Explorer](/en/providers/quran-finder) — text, via proxy
+- [Tafsir API (spa5k)](/en/providers/spa5k-tafsir) — tafsir
 
 See the [CHANGELOG](https://github.com/Ibrahim-Rezq/quran-api-unified/blob/main/CHANGELOG.md)
 for release history and [CONTRIBUTING](https://github.com/Ibrahim-Rezq/quran-api-unified/blob/main/CONTRIBUTING.md)

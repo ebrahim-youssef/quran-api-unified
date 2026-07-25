@@ -1,6 +1,6 @@
 # Quran Explorer (Quran Finder) — provider reference
 
-[العربية](./quran-finder.md) · **English**
+[العربية](/providers/quran-finder) · **English**
 
 - **Id:** `quran_finder` · **Adapter file:** `src/adapters/quran-finder.ts`
 - **Homepage:** https://quran-finder.com

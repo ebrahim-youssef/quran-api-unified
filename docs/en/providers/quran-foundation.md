@@ -1,6 +1,6 @@
 # Quran Foundation — provider reference
 
-[العربية](./quran-foundation.md) · **English**
+[العربية](/providers/quran-foundation) · **English**
 
 - **Id:** `quran_foundation` · **Adapter file:** `src/adapters/quran-foundation.ts`
 - **Homepage / docs:** https://quran.com · https://api-docs.quran.foundation

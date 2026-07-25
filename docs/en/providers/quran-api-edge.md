@@ -1,6 +1,6 @@
 # Quran API (Edge) — provider reference
 
-[العربية](./quran-api-edge.md) · **English**
+[العربية](/providers/quran-api-edge) · **English**
 
 - **Id:** `quran_api_edge` · **Adapter file:** `src/adapters/quran-api-edge.ts`
 - **Homepage:** https://quranapi.pages.dev

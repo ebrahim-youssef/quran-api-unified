@@ -294,9 +294,13 @@ developers can read, use, and contribute in Arabic.
 - **Arabic is authored natively** in correct, natural فصحى — never a literal EN→AR
   translation. Author the Arabic file first, then render the English mirror from it.
 - File pairing: the primary file is Arabic (`README.md`, `CONTRIBUTING.md`,
-  `docs/providers/<id>.md`), each with an English mirror alongside (`README.en.md`,
-  `CONTRIBUTING.en.md`, `docs/providers/<id>.en.md`) linked from a header line at the top of
-  both. `README.md` in Arabic is what npm and GitHub show by default — intended.
+  `docs/providers/<id>.md`), each with an English mirror linked from a header line at the top
+  of both. For `README`/`CONTRIBUTING` (plain GitHub-rendered files, no routing involved) the
+  mirror is a `.en.md` suffix alongside the original. `docs/providers/<id>.md`'s mirror lives
+  at `docs/en/providers/<id>.md` instead — a real subpath, not a suffix — because the
+  VitePress site assigns a page's locale (and `dir: rtl`/`ltr`) by URL path prefix (`/en/...`),
+  so a same-directory `<id>.en.md` file would silently render under the Arabic/RTL locale.
+  `README.md` in Arabic is what npm and GitHub show by default — intended.
 - Arabic docs are RTL; keep code blocks, identifiers, URLs, and CLI commands LTR (they are
   English). A short "English 🇬🇧 | العربية" switcher line sits at the top of each doc.
 

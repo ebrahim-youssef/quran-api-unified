@@ -54,9 +54,11 @@ imports `core/http.ts`. This is the boundary the linter enforces.
 
 1. Fetch the provider's current API docs, make one real call, and save the response under
    `test/fixtures/<id>/`.
-2. Write the provider page `docs/providers/<id>.md` (and its English mirror `<id>.en.md`) from
-   the template: base URL, endpoints, params, auth, rate limits, the raw response shape, **and
-   why** the mapping is what it is.
+2. Write the provider page `docs/providers/<id>.md` (and its English mirror
+   `docs/en/providers/<id>.md` — a real subpath, not a `.en.md` suffix, so the site's `/en/`
+   locale routing picks up the right language and text direction) from the template: base URL,
+   endpoints, params, auth, rate limits, the raw response shape, **and why** the mapping is
+   what it is.
 3. Add `src/adapters/<id-kebab>.ts` implementing the port, and register it in
    `src/adapters/index.ts`.
 4. Tests: test `transform` against the recorded fixture (correct mapping, malformed input) and

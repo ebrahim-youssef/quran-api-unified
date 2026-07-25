@@ -1,6 +1,6 @@
 # Al-Quran Cloud — مرجع المزوّد
 
-**العربية** · [English](./alquran-cloud.en.md)
+**العربية** · [English](/en/providers/alquran-cloud)
 
 - **المعرّف:** `alquran_cloud` · **ملف المُحوّل:** `src/adapters/alquran-cloud.ts`
 - **الصفحة الرئيسية / التوثيق:** https://alquran.cloud/api

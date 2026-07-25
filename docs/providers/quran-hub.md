@@ -1,6 +1,6 @@
 # Quran Hub — مرجع المزوّد
 
-**العربية** · [English](./quran-hub.en.md)
+**العربية** · [English](/en/providers/quran-hub)
 
 - **المعرّف:** `quran_hub` · **ملف المُحوّل:** `src/adapters/quran-hub.ts`
 - **الصفحة الرئيسية:** https://quranhub.app

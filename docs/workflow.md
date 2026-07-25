@@ -43,8 +43,9 @@ new ADR first. Output a short brief; **STOP and get user confirmation before Pha
    compose, http) → client → optional zod entry → docs.**
 3. For each layer touched, add its test task from the test matrix (`docs/stack.md` §8).
 4. **Adding a provider adapter?** the tasks are fixed: fetch upstream docs → save a real
-   response as a fixture → write `docs/providers/<id>.md` (+ `.en.md`) → implement + register
-   the adapter → transform/buildUrl tests → wire into the mandatory-path integration tests.
+   response as a fixture → write `docs/providers/<id>.md` (+ `docs/en/providers/<id>.md`) →
+   implement + register the adapter → transform/buildUrl tests → wire into the mandatory-path
+   integration tests.
 5. Add a **Changeset** task (describe the change + its SemVer bump).
 
 ## Phase 3 — Implementation (layer by layer)

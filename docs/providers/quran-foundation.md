@@ -1,6 +1,6 @@
 # Quran Foundation — مرجع المزوّد
 
-**العربية** · [English](./quran-foundation.en.md)
+**العربية** · [English](/en/providers/quran-foundation)
 
 - **المعرّف:** `quran_foundation` · **ملف المُحوّل:** `src/adapters/quran-foundation.ts`
 - **الصفحة الرئيسية / التوثيق:** https://quran.com · https://api-docs.quran.foundation
