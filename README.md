@@ -101,6 +101,54 @@ const quran = createQuranClient({
 المُحوّل الذي يتطلب اعتمادًا ولم تُزوَّده به يُتخطَّى في الاختيار التلقائيّ، ولا يُطلق
 خطأً إلا إذا طلبتَه بالاسم صراحةً.
 
+## استخدامٌ متقدّم
+
+**اختيار مزوّدٍ محدَّد** بترتيب رجوعٍ احتياطيّ من اختيارك:
+
+```ts
+const res = await quran.get({
+  ref: { surah: 1, ayah: 1 },
+  include: ['text'],
+  source: { text: { id: 'quran_hub', fallback: ['quran_finder', 'alquran_cloud'] } },
+})
+```
+
+**تسجيل مُحوّلٍ مخصّص** — وصفةٌ إعلانيّة، لا صنفًا تُوَرِّثه:
+
+```ts
+import { createQuranClient, type Adapter } from 'quran-api-unified'
+
+const myProvider: Adapter = {
+  id: 'my_provider',
+  name: 'My Provider',
+  capabilities: ['text'],
+  auth: 'none',
+  text: {
+    buildUrl: (q) => `https://example.com/api/ayah/${q.surah}/${q.ayah ?? 1}`,
+    transform: (raw, q) => ({
+      key: `${q.surah}:${q.ayah ?? 1}`,
+      surah: q.surah,
+      ayah: q.ayah ?? 1,
+      source: 'My Provider',
+      text: (raw as { text: string }).text,
+    }),
+  },
+}
+
+const quran = createQuranClient({ adapters: [myProvider] })
+```
+
+**التحقق بـ zod** عبر مدخلٍ اختياريّ (zod اعتماديّةٌ نظيرةٌ، لا جزءًا من النواة):
+
+```ts
+import { parseUnifiedVerse } from 'quran-api-unified/zod'
+
+const verse = parseUnifiedVerse(res.value.text?.value)
+```
+
+الدليل الكامل — بما فيه النتائج الجزئية والمتصفّح وCORS — على موقع التوثيق؛ انظر
+[التوثيق](#التوثيق) أدناه.
+
 ## التوثيق
 
 التوثيق الكامل — الأدلّة، والمرجع البرمجيّ، وصفحات المزوّدين — في موقع التوثيق (يُبنى

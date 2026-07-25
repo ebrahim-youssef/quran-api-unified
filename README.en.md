@@ -101,6 +101,54 @@ const quran = createQuranClient({
 An adapter that needs credentials it wasn't given is skipped in auto-selection, and throws
 only if you request it explicitly by name.
 
+## Advanced usage
+
+**Pin a concern to one provider**, with your own fallback order:
+
+```ts
+const res = await quran.get({
+  ref: { surah: 1, ayah: 1 },
+  include: ['text'],
+  source: { text: { id: 'quran_hub', fallback: ['quran_finder', 'alquran_cloud'] } },
+})
+```
+
+**Register a custom adapter** — a declarative recipe, not a class to extend:
+
+```ts
+import { createQuranClient, type Adapter } from 'quran-api-unified'
+
+const myProvider: Adapter = {
+  id: 'my_provider',
+  name: 'My Provider',
+  capabilities: ['text'],
+  auth: 'none',
+  text: {
+    buildUrl: (q) => `https://example.com/api/ayah/${q.surah}/${q.ayah ?? 1}`,
+    transform: (raw, q) => ({
+      key: `${q.surah}:${q.ayah ?? 1}`,
+      surah: q.surah,
+      ayah: q.ayah ?? 1,
+      source: 'My Provider',
+      text: (raw as { text: string }).text,
+    }),
+  },
+}
+
+const quran = createQuranClient({ adapters: [myProvider] })
+```
+
+**Validate with zod** via the optional entry (zod is a peer dependency, not bundled):
+
+```ts
+import { parseUnifiedVerse } from 'quran-api-unified/zod'
+
+const verse = parseUnifiedVerse(res.value.text?.value)
+```
+
+The full guide — partial results, browser & CORS, and more — is on the
+[docs site](#documentation) below.
+
 ## Documentation
 
 Full documentation — guides, the API reference, and provider pages — lives on the docs site
