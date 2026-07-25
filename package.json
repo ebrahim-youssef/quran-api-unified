@@ -1,6 +1,6 @@
 {
   "name": "quran-api-unified",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One consistent interface over multiple Quran text, audio, translation, and tafsir APIs — provider selection and automatic fallback, framework-agnostic, dependency-free core.",
   "type": "module",
   "main": "./dist/index.cjs",
