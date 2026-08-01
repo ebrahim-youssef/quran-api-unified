@@ -25,6 +25,17 @@ foundations. Each ticket has one acceptance criterion. Follow `docs/workflow.md`
 
 ## Later (post-MVP)
 
+### Tracked
+
+Neither is decided yet — both need an ADR before any code.
+
+| # | Ticket | Acceptance criterion |
+| --- | --- | --- |
+| 4 | **Quran metadata** — juz, mushaf page, sajdah, ruku, revelation type, all derived from the ref with no extra fetch. Open: adopt [`quran-meta`](https://www.npmjs.com/package/quran-meta) (MIT, ~1.7 MB unpacked) or lift just the tables we need. Either way it sits behind a separate entry or an optional peer, since `core` takes no dependencies. From [itqan #399](https://community.itqan.dev/d/399/11) | one call with an ayah ref returns typed metadata with zero fetches; tests cover juz/page boundaries and sajdah ayahs |
+| 5 | **Terminology unification** — one fixed vocabulary on the public surface (`chapter`/`verse` proposed over today's `surah`/`ayah`), provider naming kept inside adapters. Breaking, so it lands in a major with deprecated aliases. Waiting on the community glossary in [itqan #521](https://community.itqan.dev/d/521) | the glossary lives in one doc, every public type and error follows it, and a test or lint rule keeps provider naming out of the public API |
+
+### Untracked
+
 - Additional audio / translation / tafsir providers beyond the seed set.
 - **Juz** granularity (juz→verses index + multi-fetch).
 - Health-aware / fastest-provider routing (v1 uses ordered preference + fallback).
