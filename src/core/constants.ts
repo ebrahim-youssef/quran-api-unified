@@ -8,3 +8,10 @@
 
 /** Default per-request timeout, in milliseconds, applied when the caller does not override it. */
 export const DEFAULT_TIMEOUT_MS = 10_000
+
+/**
+ * The canonical schema's own version (ADR-0012), independent of the npm package version.
+ * Stamped on every {@link GetResult} and every {@link Outcome} so a result — or an outcome
+ * extracted from one — is self-describing about which schema shape it was built against.
+ */
+export const SCHEMA_VERSION = '0.3.0'
