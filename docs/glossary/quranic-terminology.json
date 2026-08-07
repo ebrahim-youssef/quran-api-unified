@@ -1,0 +1,287 @@
+[
+  {
+    "arabic": "الْقُرْآنُ",
+    "englishTranslation": "Quran",
+    "literalTranslation": "Quran"
+  },
+  {
+    "arabic": "الْكِتَابُ",
+    "englishTranslation": "Kitab",
+    "literalTranslation": "Book"
+  },
+  {
+    "arabic": "الْمُصْحَفُ",
+    "englishTranslation": "Mushaf",
+    "literalTranslation": "Quran Codex"
+  },
+  {
+    "arabic": "طَبْعَةُ الْمُصْحَفِ",
+    "englishTranslation": "Mushaf Edition",
+    "literalTranslation": "Edition of the Mushaf"
+  },
+  {
+    "arabic": "السُّورَةُ",
+    "englishTranslation": "Surah",
+    "literalTranslation": "Chapter"
+  },
+  {
+    "arabic": "الْآيَةُ",
+    "englishTranslation": "Ayah",
+    "literalTranslation": "Verse"
+  },
+  {
+    "arabic": "الْفَاصِلَةُ",
+    "englishTranslation": "Fasilah",
+    "literalTranslation": "Verse Ending"
+  },
+  {
+    "arabic": "الْكَلِمَةُ",
+    "englishTranslation": "Kalimah",
+    "literalTranslation": "Word"
+  },
+  {
+    "arabic": "الْحَرْفُ",
+    "englishTranslation": "Harf",
+    "literalTranslation": "Letter"
+  },
+  {
+    "arabic": "الْبَسْمَلَةُ",
+    "englishTranslation": "Basmalah",
+    "literalTranslation": "Bismillah Formula"
+  },
+  {
+    "arabic": "الْحُرُوفُ الْمُقَطَّعَةُ",
+    "englishTranslation": "Disjointed Letter",
+    "literalTranslation": "Separated Letter"
+  },
+  {
+    "arabic": "جِذْرُ الْكَلِمَةِ",
+    "englishTranslation": "Word Root",
+    "literalTranslation": "Word Root"
+  },
+  {
+    "arabic": "الْجُزْءُ",
+    "englishTranslation": "Juz",
+    "literalTranslation": "Part"
+  },
+  {
+    "arabic": "الْحِزْبُ",
+    "englishTranslation": "Hizb",
+    "literalTranslation": "Group"
+  },
+  {
+    "arabic": "رُبْعُ الْحِزْبِ",
+    "englishTranslation": "Rub al-Hizb",
+    "literalTranslation": "Quarter of a Hizb"
+  },
+  {
+    "arabic": "الثُّمُنُ",
+    "englishTranslation": "Thumn",
+    "literalTranslation": "Eighth"
+  },
+  {
+    "arabic": "الْمَنْزِلُ",
+    "englishTranslation": "Manzil",
+    "literalTranslation": "Station"
+  },
+  {
+    "arabic": "الرُّكُوعُ",
+    "englishTranslation": "Ruku",
+    "literalTranslation": "Section"
+  },
+  {
+    "arabic": "الصَّفْحَةُ",
+    "englishTranslation": "Safhah",
+    "literalTranslation": "Page"
+  },
+  {
+    "arabic": "السَّبْعُ الطِّوَالُ",
+    "englishTranslation": "Al-Sabe al-Tiwal",
+    "literalTranslation": "Seven Long Surahs"
+  },
+  {
+    "arabic": "الْمِئُونُ",
+    "englishTranslation": "Al-Miun",
+    "literalTranslation": "Hundred-Verse Surahs"
+  },
+  {
+    "arabic": "الْمَثَانِي",
+    "englishTranslation": "Al-Mathani",
+    "literalTranslation": "Oft-Repeated Surahs"
+  },
+  {
+    "arabic": "الْمُفَصَّلُ",
+    "englishTranslation": "Mufassal",
+    "literalTranslation": "Shorter Surahs"
+  },
+  {
+    "arabic": "النُّزُولُ",
+    "englishTranslation": "Nuzul",
+    "literalTranslation": "Descent"
+  },
+  {
+    "arabic": "الْمَكِّيُّ",
+    "englishTranslation": "Makki",
+    "literalTranslation": "Meccan"
+  },
+  {
+    "arabic": "الْمَدَنِيُّ",
+    "englishTranslation": "Madani",
+    "literalTranslation": "Medinan"
+  },
+  {
+    "arabic": "أَسْبَابُ النُّزُولِ",
+    "englishTranslation": "Asbab al-Nuzul",
+    "literalTranslation": "Occasions of Revelation"
+  },
+  {
+    "arabic": "تَرْتِيبُ النُّزُولِ",
+    "englishTranslation": "Revelation Order",
+    "literalTranslation": "Order of Revelation"
+  },
+  {
+    "arabic": "الرَّسْمُ الْعُثْمَانِيُّ",
+    "englishTranslation": "Uthmani Rasm",
+    "literalTranslation": "Uthmanic Orthography"
+  },
+  {
+    "arabic": "عَلَامَةُ الْوَقْفِ",
+    "englishTranslation": "Waqf Mark",
+    "literalTranslation": "Pause Mark"
+  },
+  {
+    "arabic": "الْوَقْفُ اللَّازِمُ (مـ)",
+    "englishTranslation": "Waqf Lazim",
+    "literalTranslation": "Mandatory Pause"
+  },
+  {
+    "arabic": "الْوَقْفُ الْمَمْنُوعُ (لا)",
+    "englishTranslation": "Waqf Mamnu",
+    "literalTranslation": "Prohibited Pause"
+  },
+  {
+    "arabic": "الْوَقْفُ الْجَائِزُ (ج)",
+    "englishTranslation": "Waqf Jaiz",
+    "literalTranslation": "Permissible Pause"
+  },
+  {
+    "arabic": "الْوَقْفُ الْجَائِزُ وَالْوَصْلُ أَوْلَى (صلى)",
+    "englishTranslation": "Wasl",
+    "literalTranslation": "Continuation"
+  },
+  {
+    "arabic": "الْوَقْفُ الْجَائِزُ وَالْوَقْفُ أَوْلَى (قلى)",
+    "englishTranslation": "Waqf",
+    "literalTranslation": "Stopping"
+  },
+  {
+    "arabic": "وَقْفُ الْمُعَانَقَةِ (∴ ∴)",
+    "englishTranslation": "Waqf al-Muanaqah",
+    "literalTranslation": "Interchangeable Pause"
+  },
+  {
+    "arabic": "عَلَامَاتُ الأَجْزَاءِ وَالأَحْزَابِ وَالأَرْبَاعِ",
+    "englishTranslation": "Division Mark",
+    "literalTranslation": "Juz, Hizb, or Quarter Mark"
+  },
+  {
+    "arabic": "عَلَامَةُ السَّجْدَةِ",
+    "englishTranslation": "Sajdah Mark",
+    "literalTranslation": "Prostration Mark"
+  },
+  {
+    "arabic": "التِّلَاوَةُ",
+    "englishTranslation": "Tilawah",
+    "literalTranslation": "Recitation"
+  },
+  {
+    "arabic": "التَّرْتِيلُ",
+    "englishTranslation": "Tartil",
+    "literalTranslation": "Measured Recitation"
+  },
+  {
+    "arabic": "التَّحْقِيقُ",
+    "englishTranslation": "Tahqiq",
+    "literalTranslation": "Slow, Precise Recitation"
+  },
+  {
+    "arabic": "التَّدْوِيرُ",
+    "englishTranslation": "Tadwir",
+    "literalTranslation": "Moderate-Paced Recitation"
+  },
+  {
+    "arabic": "الْحَدْرُ",
+    "englishTranslation": "Hadr",
+    "literalTranslation": "Rapid Recitation"
+  },
+  {
+    "arabic": "التَّجْوِيدُ",
+    "englishTranslation": "Tajwid",
+    "literalTranslation": "Rules of Recitation"
+  },
+  {
+    "arabic": "الْقِرَاءَةُ",
+    "englishTranslation": "Qira'ah",
+    "literalTranslation": "Reading"
+  },
+  {
+    "arabic": "الرِّوَايَةُ",
+    "englishTranslation": "Riwayah",
+    "literalTranslation": "Transmission"
+  },
+  {
+    "arabic": "الطَّرِيقُ",
+    "englishTranslation": "Tariq",
+    "literalTranslation": "Transmission Path"
+  },
+  {
+    "arabic": "الرَّاوِي",
+    "englishTranslation": "Rawi",
+    "literalTranslation": "Transmitter"
+  },
+  {
+    "arabic": "الْقَارِئُ",
+    "englishTranslation": "Qari",
+    "literalTranslation": "Reciter"
+  },
+  {
+    "arabic": "الْمُقْرِئُ",
+    "englishTranslation": "Muqri",
+    "literalTranslation": "Teacher of Recitation"
+  },
+  {
+    "arabic": "السَّكْتَةُ",
+    "englishTranslation": "Saktah",
+    "literalTranslation": "Short Pause"
+  },
+  {
+    "arabic": "سُجُودُ التِّلَاوَةِ",
+    "englishTranslation": "Sujud al-Tilawah",
+    "literalTranslation": "Prostration of Recitation"
+  },
+  {
+    "arabic": "الْخَتْمَةُ",
+    "englishTranslation": "Khatmah",
+    "literalTranslation": "Complete Recitation"
+  },
+  {
+    "arabic": "التَّرْجَمَةُ",
+    "englishTranslation": "Translation",
+    "literalTranslation": "Translation"
+  },
+  {
+    "arabic": "التَّفْسِيرُ",
+    "englishTranslation": "Tafsir",
+    "literalTranslation": "Exegesis"
+  },
+  {
+    "arabic": "النَّقْلُ الْحَرْفِيُّ",
+    "englishTranslation": "Transliteration",
+    "literalTranslation": "Letter-by-Letter Transcription"
+  },
+  {
+    "arabic": "الْإِعْرَابُ",
+    "englishTranslation": "I'rab",
+    "literalTranslation": "Grammatical Analysis"
+  }
+]

@@ -163,3 +163,7 @@ const verse = parseUnifiedVerse(res.value.text?.value)
 ## الترخيص
 
 [MIT](./LICENSE).
+
+## شكر وتقدير
+
+- [جدول المصطلحات القرآنية](https://docs.google.com/spreadsheets/d/1PLLtcgwbwtkOfpAZOotUQiZw-ARtZiAQuAkx2Z4D0XA/edit?gid=0)

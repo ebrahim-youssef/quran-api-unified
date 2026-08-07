@@ -163,3 +163,7 @@ guide and the adapter contract are in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 ## License
 
 [MIT](./LICENSE).
+
+## Credits
+
+- [Quranic terminology glossary](https://docs.google.com/spreadsheets/d/1PLLtcgwbwtkOfpAZOotUQiZw-ARtZiAQuAkx2Z4D0XA/edit?gid=0)
