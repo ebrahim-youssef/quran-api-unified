@@ -1,18 +1,20 @@
 /**
  * Result types — the typed-results contract from ADR-0003. `get()` never throws for a
  * provider/network failure; it returns a discriminated union, and every concern's outcome
- * is independently inspectable via {@link Part}, including its full attempt trail.
+ * is independently inspectable via {@link Outcome}, including its full attempt trail.
  *
  * Import boundary (docs/stack.md §2): this module imports only *types* from
- * `core/{schema,errors}` and must never import `core/http.ts` or anything that performs
- * I/O.
+ * `core/{schema,errors,identity}` and the `SCHEMA_VERSION` constant, and must never import
+ * `core/http.ts` or anything that performs I/O.
  */
 
+import { SCHEMA_VERSION } from './constants.js'
 import type { QuranError } from './errors.js'
+import type { Provenance } from './identity.js'
 import type {
   Ref,
   UnifiedAudio,
-  UnifiedTafsir,
+  UnifiedExegesis,
   UnifiedTranslation,
   UnifiedVerse,
 } from './schema.js'
@@ -32,14 +34,18 @@ export interface Attempt {
 
 /**
  * One concern's outcome inside a composed `get()` result. Partial results are first-class
- * (ADR-0003): a failed `Part` does not fail the whole call, only that concern.
+ * (ADR-0003): a failed `Outcome` does not fail the whole call, only that concern.
+ * `schemaVersion` (ADR-0012) and `provenance` (ADR-0014) make an `Outcome` self-describing
+ * even when extracted independently of the rest of the envelope.
  */
-export interface Part<T> {
+export interface Outcome<T> {
   readonly ok: boolean
+  /** The schema shape this outcome was built against (ADR-0012). */
+  readonly schemaVersion: string
   readonly value?: T
   readonly error?: QuranError
-  /** The adapter id that served this concern, when `ok` is true. */
-  readonly source?: string
+  /** Where the value came from, when `ok` is true (ADR-0014). */
+  readonly provenance?: Provenance
   /**
    * The provider's original, un-normalized response body — the exact value the adapter's
    * `transform` received. Present only when the caller requested it via `includeRaw`
@@ -51,37 +57,56 @@ export interface Part<T> {
 }
 
 /**
- * Builds a successful {@link Part}. Pure — never throws, never performs I/O. Pass `raw` to
- * attach the provider's original response body (opt-in raw passthrough, ADR-0010).
+ * Builds a successful {@link Outcome}. Pure — never throws, never performs I/O. `schemaVersion`
+ * is always the current {@link SCHEMA_VERSION}, so it can never drift between outcomes built in
+ * the same call.
  */
-export function okPart<T>(
+export function okOutcome<T>(
   value: T,
-  source: string,
   attempts: readonly Attempt[],
+  provenance?: Provenance,
   raw?: unknown,
-): Part<T> {
-  return { ok: true, value, source, attempts, ...(raw === undefined ? {} : { raw }) }
+): Outcome<T> {
+  return {
+    ok: true,
+    schemaVersion: SCHEMA_VERSION,
+    value,
+    attempts,
+    ...(provenance ? { provenance } : {}),
+    ...(raw === undefined ? {} : { raw }),
+  }
 }
 
-/** Builds a failed {@link Part}. Pure — never throws, never performs I/O. */
-export function errPart<T>(error: QuranError, attempts: readonly Attempt[]): Part<T> {
-  return { ok: false, error, attempts }
+/** Builds a failed {@link Outcome}. Pure — never throws, never performs I/O. */
+export function errOutcome<T>(error: QuranError, attempts: readonly Attempt[]): Outcome<T> {
+  return { ok: false, schemaVersion: SCHEMA_VERSION, error, attempts }
 }
 
-/** The composed result of a single `get()` call — one `Part` per requested concern. */
+/** The composed result of a single `get()` call — one `Outcome` per requested concern. */
 export interface Composed {
   readonly ref: Ref
-  readonly text?: Part<UnifiedVerse>
-  readonly audio?: Part<UnifiedAudio>
-  readonly translation?: Part<UnifiedTranslation>
-  readonly tafsir?: Part<UnifiedTafsir>
+  readonly text?: Outcome<UnifiedVerse>
+  readonly audio?: Outcome<UnifiedAudio>
+  readonly translation?: Outcome<UnifiedTranslation>
+  readonly exegesis?: Outcome<UnifiedExegesis>
 }
 
 /**
  * The top-level `get()` result. `ok:false` here means total inability to serve *any*
  * requested concern, or misuse; a single unfulfilled concern among several successes still
- * reports `ok:true` with that concern's `Part` marked failed (ADR-0003).
+ * reports `ok:true` with that concern's `Outcome` marked failed (ADR-0003). Both branches
+ * carry `schemaVersion` (ADR-0012).
  */
 export type GetResult =
-  | { readonly ok: true; readonly value: Composed; readonly attempts: readonly Attempt[] }
-  | { readonly ok: false; readonly error: QuranError; readonly attempts: readonly Attempt[] }
+  | {
+      readonly ok: true
+      readonly schemaVersion: string
+      readonly value: Composed
+      readonly attempts: readonly Attempt[]
+    }
+  | {
+      readonly ok: false
+      readonly schemaVersion: string
+      readonly error: QuranError
+      readonly attempts: readonly Attempt[]
+    }
