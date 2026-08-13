@@ -1,9 +1,12 @@
+import type { UnifiedWordSlot } from './words.js'
+import type { Provenance } from './identity.js'
+
 /**
  * The unified schema — every provider's response is normalized into these shapes so a
  * consumer never branches on which provider served a request.
  *
- * Import boundary (docs/stack.md §2): this module is types only. It imports nothing and
- * must never import `core/http.ts` or anything that performs I/O.
+ * Import boundary (docs/stack.md §2): this module imports only *types* from
+ * `core/{words,identity}`, and must never import `core/http.ts` or anything that performs I/O.
  */
 
 /**
@@ -62,6 +65,14 @@ export interface UnifiedVerse {
   readonly verse: number
   readonly text: string
   readonly structure: StructuralPosition
+  /** The base transmission's alignment slot sequence for this verse, when word data is bundled (ADR-0016). */
+  readonly slots?: readonly UnifiedWordSlot[]
+  /** First slot number covered by this verse (inclusive). */
+  readonly startSlot?: number
+  /** Last slot number covered by this verse (inclusive). */
+  readonly endSlot?: number
+  /** Where the bundled word/slot data came from, when present (ADR-0015). */
+  readonly wordsProvenance?: Provenance
   readonly meta?: UnifiedMeta
 }
 
