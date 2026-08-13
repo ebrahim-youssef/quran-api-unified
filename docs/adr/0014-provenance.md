@@ -18,13 +18,20 @@ the same split an HTTP response draws between headers and body.
 
 ```ts
 export interface Provenance {
-  readonly provider: ResourceRef
+  readonly provider: { readonly id: string; readonly name: string }
   readonly providerResourceId?: string
   readonly sourceUrl?: string
   readonly sourceVersion?: string
   readonly retrievedAt: string
 }
 ```
+
+`provider` is a plain `{ id, name }` pair, not a `ResourceRef` — adapter/provider identity is
+an internal implementation detail, not a canonical Quranic resource presented to end users, so
+it does not need `ResourceRef`'s bilingual `LocalizedName`. (This corrects a drafting slip in
+this ADR's original text, caught during Task 3's review: `src/core/identity.ts` as committed,
+and the task brief that specified it, both already used the inline shape below — the decision
+itself was never `ResourceRef`, only this document's Decision block said so.)
 
 `sourceUrl` and `retrievedAt` are captured by the client's `runAttempt`, at the same point
 `durationMs` is measured — never inside an adapter's `transform`, preserving the pure-handler
