@@ -4,32 +4,31 @@ import {
   parseUnifiedVerse,
   safeParseUnifiedVerse,
   unifiedAudioSchema,
-  unifiedTafsirSchema,
+  unifiedExegesisSchema,
   unifiedTranslationSchema,
   unifiedVerseSchema,
 } from './index.js'
 import type {
   UnifiedAudio,
-  UnifiedTafsir,
+  UnifiedExegesis,
   UnifiedTranslation,
   UnifiedVerse,
 } from '../core/schema.js'
 
 const verse: UnifiedVerse = {
   key: '1:1',
-  surah: 1,
-  ayah: 1,
-  source: 'Al-Quran Cloud',
+  chapter: 1,
+  verse: 1,
   text: 'بِسْمِ اللَّهِ',
-  meta: { juz: 1, page: 1 },
+  structure: { part: 1, group: 1, quarter: 1 },
+  meta: { page: 1 },
 }
 
 const audio: UnifiedAudio = {
   key: '1:1',
-  surah: 1,
-  ayah: 1,
-  scope: 'ayah',
-  source: 'Al-Quran Cloud',
+  chapter: 1,
+  verse: 1,
+  scope: 'verse',
   reciter: 'ar.alafasy',
   url: 'https://cdn.example/1.mp3',
   format: 'mp3',
@@ -42,16 +41,14 @@ describe('zod entry — parsing', () => {
 
   it('safeParse succeeds on valid input and fails on malformed', () => {
     expect(safeParseUnifiedVerse(verse).success).toBe(true)
-    // missing `text`, wrong `surah` type
-    expect(safeParseUnifiedVerse({ key: '1:1', surah: '1', ayah: 1, source: 'x' }).success).toBe(
-      false,
-    )
+    // missing `text`, wrong `chapter` type, missing `structure`
+    expect(safeParseUnifiedVerse({ key: '1:1', chapter: '1', verse: 1 }).success).toBe(false)
   })
 
   it('rejects a malformed audio (bad enum) and accepts a valid one', () => {
     expect(unifiedAudioSchema.safeParse(audio).success).toBe(true)
     expect(unifiedAudioSchema.safeParse({ ...audio, format: 'wav' }).success).toBe(false)
-    expect(unifiedAudioSchema.safeParse({ ...audio, scope: 'juz' }).success).toBe(false)
+    expect(unifiedAudioSchema.safeParse({ ...audio, scope: 'part' }).success).toBe(false)
   })
 })
 
@@ -68,8 +65,8 @@ describe('zod entry — type sync (schemas mirror the TS types, modulo readonly)
     expectTypeOf<z.infer<typeof unifiedTranslationSchema>>().toMatchTypeOf<UnifiedTranslation>()
     expectTypeOf<UnifiedTranslation>().toMatchTypeOf<z.infer<typeof unifiedTranslationSchema>>()
   })
-  it('UnifiedTafsir', () => {
-    expectTypeOf<z.infer<typeof unifiedTafsirSchema>>().toMatchTypeOf<UnifiedTafsir>()
-    expectTypeOf<UnifiedTafsir>().toMatchTypeOf<z.infer<typeof unifiedTafsirSchema>>()
+  it('UnifiedExegesis', () => {
+    expectTypeOf<z.infer<typeof unifiedExegesisSchema>>().toMatchTypeOf<UnifiedExegesis>()
+    expectTypeOf<UnifiedExegesis>().toMatchTypeOf<z.infer<typeof unifiedExegesisSchema>>()
   })
 })

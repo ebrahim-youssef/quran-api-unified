@@ -10,34 +10,38 @@
 
 import { z } from 'zod'
 
-/** Provider-specific extra fields; named positions plus an open bag of unknowns. */
-export const unifiedMetaSchema = z
-  .object({ juz: z.number().optional(), page: z.number().optional() })
-  .catchall(z.unknown())
+/** Provider-specific extra fields; narrowed to `page` (ADR consequence of the v0.3 schema kernel). */
+export const unifiedMetaSchema = z.object({ page: z.number().optional() })
 
-/** A reference to an ayah or a whole surah. */
+/** A reference to a verse or a whole chapter. */
 export const refSchema = z.object({
-  surah: z.number(),
-  ayah: z.number().optional(),
+  chapter: z.number(),
+  verse: z.number().optional(),
+})
+
+/** Schema for a verse's structural position. */
+export const structuralPositionSchema = z.object({
+  part: z.number(),
+  group: z.number(),
+  quarter: z.number(),
 })
 
 /** Schema for {@link UnifiedVerse}. */
 export const unifiedVerseSchema = z.object({
   key: z.string(),
-  surah: z.number(),
-  ayah: z.number(),
-  source: z.string(),
+  chapter: z.number(),
+  verse: z.number(),
   text: z.string(),
+  structure: structuralPositionSchema,
   meta: unifiedMetaSchema.optional(),
 })
 
 /** Schema for {@link UnifiedAudio}. */
 export const unifiedAudioSchema = z.object({
   key: z.string(),
-  surah: z.number(),
-  ayah: z.number().optional(),
-  scope: z.enum(['ayah', 'surah']),
-  source: z.string(),
+  chapter: z.number(),
+  verse: z.number().optional(),
+  scope: z.enum(['verse', 'chapter']),
   reciter: z.string(),
   url: z.string(),
   format: z.enum(['mp3', 'ogg']),
@@ -47,22 +51,21 @@ export const unifiedAudioSchema = z.object({
 /** Schema for {@link UnifiedTranslation}. */
 export const unifiedTranslationSchema = z.object({
   key: z.string(),
-  surah: z.number(),
-  ayah: z.number(),
-  source: z.string(),
+  chapter: z.number(),
+  verse: z.number(),
   edition: z.string(),
   language: z.string(),
   text: z.string(),
   meta: unifiedMetaSchema.optional(),
 })
 
-/** Schema for {@link UnifiedTafsir}. */
-export const unifiedTafsirSchema = z.object({
+/** Schema for {@link UnifiedExegesis}. */
+export const unifiedExegesisSchema = z.object({
   key: z.string(),
-  surah: z.number(),
-  ayah: z.number(),
-  source: z.string(),
-  tafsirId: z.string(),
+  chapter: z.number(),
+  verse: z.number(),
+  exegesisId: z.string(),
+  language: z.string().optional(),
   text: z.string(),
   meta: unifiedMetaSchema.optional(),
 })
@@ -83,7 +86,7 @@ export const parseUnifiedTranslation = (data: unknown) => unifiedTranslationSche
 export const safeParseUnifiedTranslation = (data: unknown) =>
   unifiedTranslationSchema.safeParse(data)
 
-/** Parses and validates a {@link UnifiedTafsir}; throws a `ZodError` on invalid input. */
-export const parseUnifiedTafsir = (data: unknown) => unifiedTafsirSchema.parse(data)
-/** Non-throwing variant of {@link parseUnifiedTafsir}. */
-export const safeParseUnifiedTafsir = (data: unknown) => unifiedTafsirSchema.safeParse(data)
+/** Parses and validates a {@link UnifiedExegesis}; throws a `ZodError` on invalid input. */
+export const parseUnifiedExegesis = (data: unknown) => unifiedExegesisSchema.parse(data)
+/** Non-throwing variant of {@link parseUnifiedExegesis}. */
+export const safeParseUnifiedExegesis = (data: unknown) => unifiedExegesisSchema.safeParse(data)
