@@ -1,6 +1,6 @@
 /**
  * `quran-api-unified` — one consistent interface over multiple Quran text, audio,
- * translation, and tafsir providers, with provider selection and automatic fallback.
+ * translation, and exegesis providers, with provider selection and automatic fallback.
  *
  * This is the public API surface (named exports only; no default export). The unified
  * schema, result, and error types are the stable contract every provider normalizes into;
@@ -9,11 +9,8 @@
  * @packageDocumentation
  */
 
-/**
- * Library version marker. Superseded by the client API in a later ticket; present so
- * the packaged surface is non-empty and consumers can sanity-check their install.
- */
-export const VERSION = '0.0.0'
+// The canonical schema's own version (ADR-0012) — independent of the npm package version.
+export { SCHEMA_VERSION } from './core/constants.js'
 
 // The client factory + its default convenience binding, and the request/option types.
 export { createQuranClient, get } from './client.js'
@@ -33,23 +30,30 @@ export type { FetchLike } from './core/http.js'
 export type { SourceSelection } from './core/select.js'
 export { builtinAdapters } from './adapters/index.js'
 
-// The unified schema — the shapes every provider is normalized into (ticket #3).
+// Canonical identity and provenance primitives (ADR-0013, ADR-0014).
+export type { LocalizedName, Provenance, ResourceRef } from './core/identity.js'
+
+// The unified schema — the shapes every provider is normalized into.
 export type {
-  Ref,
-  UnifiedMeta,
-  VerseQuery,
-  UnifiedVerse,
   AudioQuery,
-  UnifiedAudio,
+  ExegesisQuery,
+  Ref,
+  StructuralPosition,
   TranslationQuery,
+  UnifiedAudio,
+  UnifiedExegesis,
+  UnifiedMeta,
   UnifiedTranslation,
-  TafsirQuery,
-  UnifiedTafsir,
+  UnifiedVerse,
+  VerseQuery,
 } from './core/schema.js'
 
 // Typed results — the errors-are-data contract from ADR-0003.
-export type { Result, Attempt, Part, Composed, GetResult } from './core/result.js'
-export { okPart, errPart } from './core/result.js'
+export type { Attempt, Composed, GetResult, Outcome, Result } from './core/result.js'
+export { errOutcome, okOutcome } from './core/result.js'
+
+// Per-word data and the ayah/slot/word alignment layer (ADR-0015, ADR-0016).
+export type { UnifiedWord, UnifiedWordSlot } from './core/words.js'
 
 // Typed errors — data for provider/network failures; thrown only for misuse.
 export type { QuranErrorCode, QuranError, ThrownQuranError } from './core/errors.js'
