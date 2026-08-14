@@ -51,11 +51,11 @@ describe('quran_foundation OAuth2 client-credentials flow (#12)', () => {
       credentials: creds,
       fetch,
     })
-    const res = await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
+    const res = await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
     expect(res.ok).toBe(true)
     if (res.ok) {
-      expect(res.value.text?.source).toBe('quran_foundation')
-      expect(res.value.text?.value?.source).toBe('Quran Foundation')
+      expect(res.value.text?.provenance?.provider.id).toBe('quran_foundation')
+      expect(res.value.text?.provenance?.provider.name).toBe('Quran Foundation')
     }
     expect(fetch.tokenCalls).toBe(1)
   })
@@ -68,8 +68,8 @@ describe('quran_foundation OAuth2 client-credentials flow (#12)', () => {
       credentials: creds,
       fetch,
     })
-    await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
-    await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
+    await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
+    await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
     expect(fetch.tokenCalls).toBe(1)
   })
 
@@ -79,7 +79,7 @@ describe('quran_foundation OAuth2 client-credentials flow (#12)', () => {
       adapters: [quranFoundation],
       fetch: oauthFetch(),
     })
-    const res = await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
+    const res = await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
     // No candidates → nothing served.
     expect(res.ok).toBe(false)
   })
@@ -92,7 +92,7 @@ describe('quran_foundation OAuth2 client-credentials flow (#12)', () => {
     })
     await expect(
       client.get({
-        ref: { surah: 1, ayah: 1 },
+        ref: { chapter: 1, verse: 1 },
         include: ['text'],
         source: { text: { id: 'quran_foundation' } },
       }),

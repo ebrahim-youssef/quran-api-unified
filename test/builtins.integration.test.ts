@@ -11,7 +11,7 @@ function json(path: string): unknown {
   )
 }
 
-// The real URLs the built-in text adapters build for surah 1, ayah 1.
+// The real URLs the built-in text adapters build for chapter 1, verse 1.
 const AQC = 'https://api.alquran.cloud/v1/ayah/1:1'
 const EDGE = 'https://quranapi.pages.dev/api/1/1.json'
 
@@ -30,12 +30,12 @@ describe('built-in registry — real adapters, fixture-routed fetch', () => {
     const client = createQuranClient({
       fetch: fetchWith({ [AQC]: { kind: 'ok', body: json('alquran_cloud/text-1-1.json') } }),
     })
-    const res = await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
+    const res = await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
     expect(res.ok).toBe(true)
     if (res.ok) {
-      // Part.source is the adapter id; the display name rides the unified value.
-      expect(res.value.text?.source).toBe('alquran_cloud')
-      expect(res.value.text?.value?.source).toBe('Al-Quran Cloud')
+      // Provenance carries both the adapter id and its display name.
+      expect(res.value.text?.provenance?.provider.id).toBe('alquran_cloud')
+      expect(res.value.text?.provenance?.provider.name).toBe('Al-Quran Cloud')
       expect(res.value.text?.value?.key).toBe('1:1')
     }
   })
@@ -47,11 +47,11 @@ describe('built-in registry — real adapters, fixture-routed fetch', () => {
         [EDGE]: { kind: 'ok', body: json('quran_api_edge/text-1-1.json') },
       }),
     })
-    const res = await client.get({ ref: { surah: 1, ayah: 1 }, include: ['text'] })
+    const res = await client.get({ ref: { chapter: 1, verse: 1 }, include: ['text'] })
     expect(res.ok).toBe(true)
     if (res.ok) {
-      expect(res.value.text?.source).toBe('quran_api_edge')
-      expect(res.value.text?.value?.source).toBe('Quran API (Edge)')
+      expect(res.value.text?.provenance?.provider.id).toBe('quran_api_edge')
+      expect(res.value.text?.provenance?.provider.name).toBe('Quran API (Edge)')
       // The failed primary is recorded ahead of the successful fallback.
       expect(res.value.text?.attempts[0]).toMatchObject({ adapterId: 'alquran_cloud', ok: false })
     }
