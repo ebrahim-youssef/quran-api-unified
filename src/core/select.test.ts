@@ -32,7 +32,7 @@ describe('select — auto mode', () => {
 
   it('returns an empty list (not an error) when no adapter serves the concern', () => {
     const res = select({
-      capability: 'tafsir',
+      capability: 'exegesis',
       adapters: [makeAdapter('a', ['text'])],
       hasCredentials: noCreds,
     })
