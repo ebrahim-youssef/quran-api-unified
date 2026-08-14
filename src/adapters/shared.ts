@@ -8,13 +8,13 @@ export function stripBom(s: string): string {
   return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s
 }
 
-/** Builds the canonical `"surah:ayah"` verse key. A missing `ayah` defaults to `1`. */
-export function verseKey(surah: number, ayah?: number): string {
-  return `${surah}:${ayah ?? 1}`
+/** Builds the canonical `"chapter:verse"` verse key. A missing `verse` defaults to `1`. */
+export function verseKey(chapter: number, verse?: number): string {
+  return `${chapter}:${verse ?? 1}`
 }
 
-/** Splits a canonical `"surah:ayah"` verse key back into its numbers. */
-export function parseVerseKey(key: string): { surah: number; ayah: number } {
-  const [surah, ayah] = key.split(':').map(Number)
-  return { surah: surah ?? 0, ayah: ayah ?? 0 }
+/** Splits a canonical `"chapter:verse"` verse key back into its numbers. */
+export function parseVerseKey(key: string): { chapter: number; verse: number } {
+  const [chapter, verse] = key.split(':').map(Number)
+  return { chapter: chapter ?? 0, verse: verse ?? 0 }
 }

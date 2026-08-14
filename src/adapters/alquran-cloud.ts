@@ -5,6 +5,7 @@
  */
 
 import type { Adapter } from '../ports/adapter.js'
+import type { StructuralPosition } from '../core/schema.js'
 import { verseKey } from './shared.js'
 
 /** Al-Quran Cloud API base (text, audio, translation). */
@@ -49,6 +50,16 @@ interface AqcTranslationResponse {
   }
 }
 
+/**
+ * Computes a verse's structural position purely from its (chapter, verse). This is a
+ * placeholder identity mapping until the real Quran structure registry (v0.3 backlog item 5)
+ * ships; every built-in text/audio/exegesis adapter uses it so structure is consistent across
+ * providers today and swaps to real data in one place later.
+ */
+function placeholderStructure(): StructuralPosition {
+  return { part: 1, group: 1, quarter: 1 }
+}
+
 /** Al-Quran Cloud (`alquran_cloud`) — verse text, ayah audio, and translations, keyless. */
 export const alquranCloud: Adapter = {
   id: 'alquran_cloud',
@@ -57,47 +68,44 @@ export const alquranCloud: Adapter = {
   capabilities: ['text', 'audio', 'translation'],
   auth: 'none',
   text: {
-    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}`,
+    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}`,
     transform: (raw) => {
       const { data } = raw as AqcAyahResponse
       return {
         key: verseKey(data.surah.number, data.numberInSurah),
-        surah: data.surah.number,
-        ayah: data.numberInSurah,
-        source: 'Al-Quran Cloud',
+        chapter: data.surah.number,
+        verse: data.numberInSurah,
         text: data.text.trim(),
-        meta: { number: data.number, juz: data.juz, page: data.page },
+        structure: placeholderStructure(),
+        ...(data.page != null ? { meta: { page: data.page } } : {}),
       }
     },
   },
   audio: {
     buildUrl: (q) =>
-      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}/${q.reciter ?? DEFAULT_RECITER}`,
+      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}/${q.reciter ?? DEFAULT_RECITER}`,
     transform: (raw, q) => {
       const { data } = raw as AqcAudioResponse
       return {
         key: verseKey(data.surah.number, data.numberInSurah),
-        surah: data.surah.number,
-        ayah: data.numberInSurah,
-        scope: 'ayah',
-        source: 'Al-Quran Cloud',
+        chapter: data.surah.number,
+        verse: data.numberInSurah,
+        scope: 'verse',
         reciter: data.edition?.identifier ?? q.reciter ?? DEFAULT_RECITER,
         url: data.audio,
         format: 'mp3',
-        meta: { audioSecondary: data.audioSecondary },
       }
     },
   },
   translation: {
     buildUrl: (q) =>
-      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.surah, q.ayah)}/${q.edition ?? DEFAULT_TRANSLATION}`,
+      `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}/${q.edition ?? DEFAULT_TRANSLATION}`,
     transform: (raw, q) => {
       const { data } = raw as AqcTranslationResponse
       return {
         key: verseKey(data.surah.number, data.numberInSurah),
-        surah: data.surah.number,
-        ayah: data.numberInSurah,
-        source: 'Al-Quran Cloud',
+        chapter: data.surah.number,
+        verse: data.numberInSurah,
         edition: data.edition?.identifier ?? q.edition ?? DEFAULT_TRANSLATION,
         language: data.edition?.language ?? 'en',
         text: data.text.trim(),

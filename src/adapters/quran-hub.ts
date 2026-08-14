@@ -4,6 +4,7 @@
  */
 
 import type { Adapter } from '../ports/adapter.js'
+import type { StructuralPosition } from '../core/schema.js'
 import { stripBom, verseKey } from './shared.js'
 
 /** Quran Hub API base (text; Al-Quran-Cloud-compatible shape). */
@@ -20,7 +21,12 @@ interface HubAyahResponse {
   }
 }
 
-/** Quran Hub (`quran_hub`) — verse text via `GET /ayah/{surah}:{ayah}` (proxy from browser). */
+/** See `alquran-cloud.ts` for why this is a placeholder pending the structure registry. */
+function placeholderStructure(): StructuralPosition {
+  return { part: 1, group: 1, quarter: 1 }
+}
+
+/** Quran Hub (`quran_hub`) — verse text via `GET /ayah/{chapter}:{verse}` (proxy from browser). */
 export const quranHub: Adapter = {
   id: 'quran_hub',
   name: 'Quran Hub',
@@ -28,17 +34,16 @@ export const quranHub: Adapter = {
   capabilities: ['text'],
   auth: 'none',
   text: {
-    buildUrl: (q) => `${QURAN_HUB_BASE}/ayah/${verseKey(q.surah, q.ayah)}`,
+    buildUrl: (q) => `${QURAN_HUB_BASE}/ayah/${verseKey(q.chapter, q.verse)}`,
     useProxy: true,
     transform: (raw) => {
       const { data } = raw as HubAyahResponse
       return {
         key: verseKey(data.surah.number, data.numberInSurah),
-        surah: data.surah.number,
-        ayah: data.numberInSurah,
-        source: 'Quran Hub',
+        chapter: data.surah.number,
+        verse: data.numberInSurah,
         text: stripBom(data.text).trim(),
-        meta: { number: data.number, juz: data.juz, surahName: data.surah.name },
+        structure: placeholderStructure(),
       }
     },
   },

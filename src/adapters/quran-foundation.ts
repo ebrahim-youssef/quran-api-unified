@@ -9,6 +9,7 @@
  */
 
 import type { Adapter } from '../ports/adapter.js'
+import type { StructuralPosition } from '../core/schema.js'
 import { parseVerseKey, verseKey } from './shared.js'
 
 /** Quran Foundation official content API base (v4), behind OAuth2. */
@@ -28,6 +29,11 @@ interface QfVersesResponse {
   }[]
 }
 
+/** See `alquran-cloud.ts` for why this is a placeholder pending the structure registry. */
+function placeholderStructure(): StructuralPosition {
+  return { part: 1, group: 1, quarter: 1 }
+}
+
 /** Quran Foundation (`quran_foundation`) — Uthmani verse text, OAuth2 client-credentials. */
 export const quranFoundation: Adapter = {
   id: 'quran_foundation',
@@ -38,7 +44,7 @@ export const quranFoundation: Adapter = {
   oauth2: { tokenUrl: QURAN_FOUNDATION_TOKEN_URL, scope: 'content' },
   text: {
     buildUrl: (q) =>
-      `${QURAN_FOUNDATION_CONTENT_BASE}/quran/verses/uthmani?verse_key=${verseKey(q.surah, q.ayah)}`,
+      `${QURAN_FOUNDATION_CONTENT_BASE}/quran/verses/uthmani?verse_key=${verseKey(q.chapter, q.verse)}`,
     headers: (ctx) => {
       const headers: Record<string, string> = {}
       if (ctx.accessToken) headers['x-auth-token'] = ctx.accessToken
@@ -47,16 +53,16 @@ export const quranFoundation: Adapter = {
       return headers
     },
     transform: (raw) => {
-      const verse = (raw as QfVersesResponse).verses[0]
-      if (!verse) throw new Error('Quran Foundation response had no verses')
-      const { surah, ayah } = parseVerseKey(verse.verse_key)
+      const verseEntry = (raw as QfVersesResponse).verses[0]
+      if (!verseEntry) throw new Error('Quran Foundation response had no verses')
+      const { chapter, verse } = parseVerseKey(verseEntry.verse_key)
       return {
-        key: verse.verse_key,
-        surah,
-        ayah,
-        source: 'Quran Foundation',
-        text: verse.text_uthmani,
-        meta: { id: verse.id, juz: verse.juz_number, page: verse.page_number },
+        key: verseEntry.verse_key,
+        chapter,
+        verse,
+        text: verseEntry.text_uthmani,
+        structure: placeholderStructure(),
+        ...(verseEntry.page_number != null ? { meta: { page: verseEntry.page_number } } : {}),
       }
     },
   },
