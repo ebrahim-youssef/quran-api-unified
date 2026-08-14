@@ -1,6 +1,6 @@
 # ADR-0015 — Word-level data: source, scope, and provenance
 
-- **Status:** amended (see Amendment below) — root/lemma sourcing blocked
+- **Status:** amended (see Amendments below) — all v1 word data sourcing deferred
 - **Date:** 2026-08-13
 
 ## Context
@@ -40,7 +40,7 @@ provenance, and real bundled data cannot ship until the required dataset-license
 place. Revisit when a suitably licensed, credentialed source supplies equivalent data for
 another transmission or when v1 needs fields beyond its defined word scope.
 
-## Amendment (2026-08-14) — the QUL-avoids-the-Corpus's-GPL premise does not hold for root/lemma
+## Amendment 1 (2026-08-14) — the QUL-avoids-the-Corpus's-GPL premise does not hold for root/lemma
 
 Task 5c's Step 1 license check (the "required manual step, not an assumption" mandated above)
 found that this ADR's rejection of the Quranic Arabic Corpus does not actually clear QUL as a
@@ -84,9 +84,58 @@ substitute for the **root/lemma/morphology** portion of the v1 field list:
   separately; this ADR does not assume its outcome).
 - The **`text`/`transliteration`/`translation` (gloss)** word-by-word resource is a separate
   case: QUL credits it to QuranWBW.com, and no Kais-Dukes/Corpus/GPL attribution was found for
-  that resource specifically. Its license text still needs the same verbatim-record treatment
-  before Task 5c ships it, per the original Decision above, but it is not blocked by this
-  finding.
+  that resource specifically. At the time this amendment was first written, it looked
+  unaffected by the finding above — see Amendment 2, which supersedes that reading.
+- Two other candidates were checked and ruled out for either portion of the field list:
+  `mustafa0x/quran-morphology` (GitHub) describes itself in its own README as "a fork of
+  Quranic Arabic Corpus Morphology v0.4" — same GPL lineage, not an alternative. The Quran
+  Foundation's official API (`api-docs.quran.foundation`) is proprietary and explicitly bars
+  the redistribution this package would need: its Developer Terms of Service state QF Content
+  "is not resold, sublicensed, or redistributed except as integral to the end-user experience,"
+  cap cached storage at one week absent a separate written agreement, and require a "separate
+  written agreement with QF" for commercial redistribution — disqualifying, regardless of which
+  word-data field is being sourced from it.
 
-This amendment does not itself decide Task 5c's revised scope (e.g., whether to ship v1 with
-`root`/`lemma` omitted) — that is recorded wherever Task 5c's own scope is finalized, not here.
+## Amendment 2 (2026-08-14) — QuranWBW also has no independent open data license; all v1 word data is deferred
+
+Amendment 1 left the `text`/`transliteration`/`translation` (gloss) resource provisionally
+clear, pending the same verbatim-license-record step applied to root/lemma. That step found the
+same dead end:
+
+- QuranWBW's frontend/marketing repo (`github.com/marwan/quranwbw.com`) is MIT-licensed
+  (confirmed via the GitHub API), but that license covers only the SvelteKit site, not the
+  word-by-word dataset.
+- The actual data-serving repo (`github.com/marwan/quranwbw`, no ".com") states, in its "Our
+  Data" README section, verbatim: "QuranWBW uses its very own data to give you that awesome
+  word-by-word experience... If you're looking for Quranic data for your own projects, a great
+  place to start is the Quranic Universal Library (QUL). It's a cool spot with lots of data! But
+  if QUL doesn't have what you need, or you're curious about our data, just get in touch." The
+  same README confirms the dataset itself lives on a private CDN (`static.quranwbw.com`),
+  outside either repo, served as pre-generated static JSON rather than through any public API.
+- QuranWBW's own maintainer therefore routes external data requesters back to QUL — the source
+  already blocked by Amendment 1 — or to an ungranted, ask-permission-first private channel.
+  There is no independent open license on offer for this dataset either.
+
+Every source checked for any v1 word-data field (QUL, the Quranic Arabic Corpus directly,
+`mustafa0x/quran-morphology`, the Quran Foundation API, QuranWBW) either carries the Corpus's
+GPL v3 terms or declines to grant redistribution rights. A hand-authored/uncredentialed
+alternative (the Itqan/CAMeL-Tools root-lemma dataset, MIT-licensed but single-author with a
+hand-patched alias-map step) was identified and considered but not adopted, consistent with
+this ADR's existing rejection of "a hand-authored dataset" above.
+
+**Decision:** defer all of Task 5c's real word/slot data — `text`, `transliteration`,
+`translation`, `root`, and `lemma` alike — rather than shipping any of it in v1. QUL itself is
+tagged backlog/unresolved for this purpose: not in use as a data source until either a
+relicensing confirmation is obtained directly from Tarteel/QUL (pursued separately, outside
+this package's scope) or a differently-sourced, suitably licensed and credentialed dataset is
+found.
+
+**What is unaffected:** ADR-0016 (the ayah/slot/word alignment architecture) and the Task 5b
+types (`UnifiedWord`, `UnifiedWordSlot`, and `UnifiedVerse`'s four optional `slots` /
+`startSlot` / `endSlot` / `wordsProvenance` fields, already committed) stand as shipped. All
+four fields are optional, so nothing breaks by them going unpopulated — only the registries that
+would populate them (`registries/words.ts`, `registries/word-alignment.ts`, Task 5c) and the
+code that would consume them (`client.ts` word enrichment, Task 10a) are deferred pending this
+decision. Revisit per the original Decision's revisit condition above: a suitably licensed,
+credentialed source for the deferred fields, for either the base transmission or another one
+such as Warsh.
