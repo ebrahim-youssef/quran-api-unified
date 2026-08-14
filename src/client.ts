@@ -8,13 +8,14 @@
  * credentials — throws (ADR-0003).
  */
 
-import { DEFAULT_TIMEOUT_MS } from './core/constants.js'
+import { DEFAULT_TIMEOUT_MS, SCHEMA_VERSION } from './core/constants.js'
 import { createError, throwQuranError, type QuranError } from './core/errors.js'
 import { httpFetch, type FetchLike, type HttpDeps } from './core/http.js'
 import { compose, type AttemptOutcome, type ComposeInput } from './core/compose.js'
 import { select, type SourceSelection } from './core/select.js'
+import type { Provenance } from './core/identity.js'
 import type { Attempt, GetResult, Result } from './core/result.js'
-import type { AudioQuery, Ref, TafsirQuery, TranslationQuery, VerseQuery } from './core/schema.js'
+import type { AudioQuery, ExegesisQuery, Ref, TranslationQuery, VerseQuery } from './core/schema.js'
 import type { Adapter, AdapterContext, Capability, CapabilityHandler } from './ports/adapter.js'
 import { builtinAdapters } from './adapters/index.js'
 
@@ -42,21 +43,23 @@ export interface ClientOptions {
 
 /** A single `get()` request: a reference, the concerns to fetch, and per-concern options. */
 export interface GetRequest {
-  /** The ayah or surah to fetch. */
+  /** The verse or chapter to fetch. */
   readonly ref: Ref
   /** Which concerns to fetch; must list at least one. */
   readonly include: readonly Capability[]
   /** Reciter id for the `audio` concern. */
   readonly reciter?: string
+  /** Canonical text-edition id for the `text` concern. */
+  readonly textEdition?: string
   /** Edition id for the `translation` concern. */
   readonly edition?: string
-  /** Tafsir id for the `tafsir` concern. */
-  readonly tafsirId?: string
+  /** Exegesis-work id for the `exegesis` concern. */
+  readonly exegesisId?: string
   /** Explicit source overrides per concern; unset concerns auto-select. */
   readonly source?: Partial<Record<Capability, SourceSelection>>
   /**
    * When true, each successful concern carries the provider's original response body on
-   * `Part.raw`, alongside the unified `value` (ADR-0010). Off by default. Useful for
+   * `Outcome.raw`, alongside the unified `value` (ADR-0010). Off by default. Useful for
    * debugging and for showing raw-vs-unified side by side.
    */
   readonly includeRaw?: boolean
@@ -101,10 +104,22 @@ async function runAttempt<Q, R>(
   })
   const durationMs = now() - started
   if (!res.ok) return { result: res, durationMs }
+  const retrievedAt = new Date().toISOString()
   try {
+    const value = handler.transform(res.value, query, ctx)
+    const sourceVersion = handler.sourceVersion?.(res.value, query, ctx)
+    const providerResourceId = handler.providerResourceId?.(res.value, query, ctx)
+    const provenance: Provenance = {
+      provider: { id: adapter.id, name: adapter.name },
+      sourceUrl: url,
+      retrievedAt,
+      ...(sourceVersion != null ? { sourceVersion } : {}),
+      ...(providerResourceId != null ? { providerResourceId } : {}),
+    }
     return {
-      result: { ok: true, value: handler.transform(res.value, query, ctx) },
+      result: { ok: true, value },
       durationMs,
+      provenance,
       ...(captureRaw ? { raw: res.value } : {}),
     }
   } catch (cause) {
@@ -251,7 +266,10 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
 
       switch (capability) {
         case 'text': {
-          const query: VerseQuery = req.ref
+          const query: VerseQuery = {
+            ...req.ref,
+            ...(req.textEdition != null ? { edition: req.textEdition } : {}),
+          }
           mutablePlan.text = {
             candidates,
             query,
@@ -284,15 +302,15 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
           }
           break
         }
-        case 'tafsir': {
-          const query: TafsirQuery = {
+        case 'exegesis': {
+          const query: ExegesisQuery = {
             ...req.ref,
-            ...(req.tafsirId != null ? { tafsirId: req.tafsirId } : {}),
+            ...(req.exegesisId != null ? { exegesisId: req.exegesisId } : {}),
           }
-          mutablePlan.tafsir = {
+          mutablePlan.exegesis = {
             candidates,
             query,
-            attempt: (adapter, q) => runWithAuth(adapter.tafsir!, adapter, q),
+            attempt: (adapter, q) => runWithAuth(adapter.exegesis!, adapter, q),
           }
           break
         }
@@ -300,15 +318,16 @@ export function createQuranClient(options: ClientOptions = {}): QuranClient {
     }
 
     const composed = await compose(plan)
-    const maybeParts = [composed.text, composed.audio, composed.translation, composed.tafsir]
-    const parts = maybeParts.filter((p): p is NonNullable<typeof p> => p != null)
-    const attempts: readonly Attempt[] = parts.flatMap((p) => p.attempts)
+    const maybeOutcomes = [composed.text, composed.audio, composed.translation, composed.exegesis]
+    const outcomes = maybeOutcomes.filter((p): p is NonNullable<typeof p> => p != null)
+    const attempts: readonly Attempt[] = outcomes.flatMap((p) => p.attempts)
 
-    if (parts.some((p) => p.ok)) {
-      return { ok: true, value: composed, attempts }
+    if (outcomes.some((p) => p.ok)) {
+      return { ok: true, schemaVersion: SCHEMA_VERSION, value: composed, attempts }
     }
     return {
       ok: false,
+      schemaVersion: SCHEMA_VERSION,
       error: createError('all_failed', 'no requested concern could be served'),
       attempts,
     }

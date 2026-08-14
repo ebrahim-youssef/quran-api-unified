@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createQuranClient } from './client.js'
 import { makeAdapter, makeFetch, url } from '../test/helpers/fakes.js'
 
-const ref = { surah: 1, ayah: 1 }
+const ref = { chapter: 1, verse: 1 }
 
 describe('createQuranClient — construction', () => {
   it('throws a configuration error (misuse) when no usable fetch is available', () => {
@@ -37,9 +37,13 @@ describe('get — composition and fallback', () => {
     const res = await client.get({ ref, include: ['text'] })
     expect(res.ok).toBe(true)
     if (res.ok) {
+      expect(res.schemaVersion).toBe('0.3.0')
       expect(res.value.text?.ok).toBe(true)
+      expect(res.value.text?.schemaVersion).toBe('0.3.0')
       expect(res.value.text?.value?.text).toBe('بسم الله')
-      expect(res.value.text?.source).toBe('a')
+      expect(res.value.text?.provenance?.provider.id).toBe('a')
+      expect(res.value.text?.provenance?.sourceUrl).toBe(url('a', 'text'))
+      expect(res.value.text?.provenance?.retrievedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
     }
   })
 
@@ -55,7 +59,7 @@ describe('get — composition and fallback', () => {
     const res = await client.get({ ref, include: ['text'] })
     expect(res.ok).toBe(true)
     if (res.ok) {
-      expect(res.value.text?.source).toBe('b')
+      expect(res.value.text?.provenance?.provider.id).toBe('b')
       expect(res.value.text?.attempts.map((x) => x.ok)).toEqual([false, true])
     }
   })
@@ -89,6 +93,7 @@ describe('get — composition and fallback', () => {
     const res = await client.get({ ref, include: ['text'] })
     expect(res.ok).toBe(false)
     if (!res.ok) {
+      expect(res.schemaVersion).toBe('0.3.0')
       expect(res.error.code).toBe('all_failed')
       expect(res.attempts).toHaveLength(1)
     }
@@ -103,7 +108,7 @@ describe('get — composition and fallback', () => {
 describe('get — raw passthrough (ADR-0010)', () => {
   const body = { text: 'raw text', number: 42 }
 
-  it('omits Part.raw by default', async () => {
+  it('omits Outcome.raw by default', async () => {
     const client = createQuranClient({
       useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
@@ -113,7 +118,7 @@ describe('get — raw passthrough (ADR-0010)', () => {
     expect(res.ok && res.value.text?.raw).toBeUndefined()
   })
 
-  it('attaches the original provider body on Part.raw when includeRaw is true', async () => {
+  it('attaches the original provider body on Outcome.raw when includeRaw is true', async () => {
     const client = createQuranClient({
       useBuiltins: false,
       fetch: makeFetch({ [url('a', 'text')]: { kind: 'ok', body } }),
@@ -151,7 +156,7 @@ describe('get — custom + credentialed adapters', () => {
     })
     client.registerAdapter(makeAdapter('custom', ['text']))
     const res = await client.get({ ref, include: ['text'] })
-    expect(res.ok && res.value.text?.source).toBe('custom')
+    expect(res.ok && res.value.text?.provenance?.provider.id).toBe('custom')
   })
 
   it('registerAdapter returns the client for chaining', () => {
@@ -166,7 +171,7 @@ describe('get — custom + credentialed adapters', () => {
       adapters: [makeAdapter('keyed', ['text'], 'apiKey'), makeAdapter('free', ['text'])],
     })
     const res = await client.get({ ref, include: ['text'] })
-    expect(res.ok && res.value.text?.source).toBe('free')
+    expect(res.ok && res.value.text?.provenance?.provider.id).toBe('free')
     // The credentialed provider was never selected, so it never appears in the attempt trail.
     const triedIds = res.ok ? res.value.text?.attempts.map((a) => a.adapterId) : []
     expect(triedIds).toEqual(['free'])
