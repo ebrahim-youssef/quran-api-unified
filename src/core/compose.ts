@@ -8,14 +8,22 @@
  */
 
 import { createError, type QuranError } from './errors.js'
-import { errPart, okPart, type Attempt, type Composed, type Part, type Result } from './result.js'
+import type { Provenance } from './identity.js'
+import {
+  errOutcome,
+  okOutcome,
+  type Attempt,
+  type Composed,
+  type Outcome,
+  type Result,
+} from './result.js'
 import type {
   AudioQuery,
+  ExegesisQuery,
   Ref,
-  TafsirQuery,
   TranslationQuery,
   UnifiedAudio,
-  UnifiedTafsir,
+  UnifiedExegesis,
   UnifiedTranslation,
   UnifiedVerse,
   VerseQuery,
@@ -26,6 +34,8 @@ import type { Adapter } from '../ports/adapter.js'
 export interface AttemptOutcome<R> {
   readonly result: Result<R, QuranError>
   readonly durationMs?: number
+  /** Where the value came from, when the attempt succeeded (ADR-0014). */
+  readonly provenance?: Provenance
   /** The provider's original response body, when the caller requested raw passthrough (ADR-0010). */
   readonly raw?: unknown
 }
@@ -46,14 +56,14 @@ export interface ComposeInput {
   readonly text?: ConcernExecution<VerseQuery, UnifiedVerse>
   readonly audio?: ConcernExecution<AudioQuery, UnifiedAudio>
   readonly translation?: ConcernExecution<TranslationQuery, UnifiedTranslation>
-  readonly tafsir?: ConcernExecution<TafsirQuery, UnifiedTafsir>
+  readonly exegesis?: ConcernExecution<ExegesisQuery, UnifiedExegesis>
 }
 
 /** Tries each candidate in order, stopping at the first success; records every attempt. */
-async function runChain<Q, R>(exec: ConcernExecution<Q, R>): Promise<Part<R>> {
+async function runChain<Q, R>(exec: ConcernExecution<Q, R>): Promise<Outcome<R>> {
   const attempts: Attempt[] = []
   for (const adapter of exec.candidates) {
-    const { result, durationMs, raw } = await exec.attempt(adapter, exec.query)
+    const { result, durationMs, provenance, raw } = await exec.attempt(adapter, exec.query)
     const attempt: Attempt = {
       adapterId: adapter.id,
       ok: result.ok,
@@ -61,32 +71,32 @@ async function runChain<Q, R>(exec: ConcernExecution<Q, R>): Promise<Part<R>> {
       ...(durationMs == null ? {} : { durationMs }),
     }
     attempts.push(attempt)
-    if (result.ok) return okPart(result.value, adapter.id, attempts, raw)
+    if (result.ok) return okOutcome(result.value, attempts, provenance, raw)
   }
   const error =
     attempts.length > 0
       ? createError('all_failed', `all ${attempts.length} provider(s) failed for the concern`)
       : createError('all_failed', 'no adapter available to serve the concern')
-  return errPart(error, attempts)
+  return errOutcome(error, attempts)
 }
 
 /**
  * Runs all requested concerns concurrently and assembles the {@link Composed} result. A failed
- * concern does not fail the others — its `Part` is marked failed and carries its attempt trail
- * (partial results are first-class, ADR-0003).
+ * concern does not fail the others — its `Outcome` is marked failed and carries its attempt
+ * trail (partial results are first-class, ADR-0003).
  */
 export async function compose(input: ComposeInput): Promise<Composed> {
-  const [text, audio, translation, tafsir] = await Promise.all([
+  const [text, audio, translation, exegesis] = await Promise.all([
     input.text ? runChain(input.text) : undefined,
     input.audio ? runChain(input.audio) : undefined,
     input.translation ? runChain(input.translation) : undefined,
-    input.tafsir ? runChain(input.tafsir) : undefined,
+    input.exegesis ? runChain(input.exegesis) : undefined,
   ])
   return {
     ref: input.ref,
     ...(text ? { text } : {}),
     ...(audio ? { audio } : {}),
     ...(translation ? { translation } : {}),
-    ...(tafsir ? { tafsir } : {}),
+    ...(exegesis ? { exegesis } : {}),
   }
 }
