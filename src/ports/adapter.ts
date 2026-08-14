@@ -1,26 +1,27 @@
 /**
- * The Adapter port — the single contract every provider implements (ADR-0005). An adapter
- * is **declarative**: per concern it exposes a `buildUrl` recipe plus a **pure** `transform`
- * that maps the provider's native response into the unified schema. Adapters never fetch;
- * only the client's I/O leaf (`core/http.ts`) touches the network (ADR-0002).
+ * The Adapter port — the single contract every provider implements (ADR-0005, extended by
+ * ADR-0014). An adapter is **declarative**: per concern it exposes a `buildUrl` recipe plus a
+ * **pure** `transform` that maps the provider's native response into the unified schema.
+ * Adapters never fetch; only the client's I/O leaf (`core/http.ts`) touches the network
+ * (ADR-0002).
  *
- * Import boundary (docs/stack.md §2): this module imports only *types* from `core/schema`.
- * It must never import `core/http`, the client, or anything that performs I/O.
+ * Import boundary (docs/stack.md §2): this module imports only *types* from `core/schema`. It
+ * must never import `core/http`, the client, or anything that performs I/O.
  */
 
 import type {
   AudioQuery,
-  TafsirQuery,
+  ExegesisQuery,
   TranslationQuery,
   UnifiedAudio,
-  UnifiedTafsir,
+  UnifiedExegesis,
   UnifiedTranslation,
   UnifiedVerse,
   VerseQuery,
 } from '../core/schema.js'
 
 /** A concern an adapter can serve. */
-export type Capability = 'text' | 'audio' | 'translation' | 'tafsir'
+export type Capability = 'text' | 'audio' | 'translation' | 'exegesis'
 
 /** How the I/O leaf should read a provider's response body. */
 export type ResponseType = 'json' | 'text'
@@ -63,6 +64,8 @@ export interface OAuth2ClientConfig {
  * One concern's handler. `transform` is **pure** — no I/O, no `Date.now()`, no randomness —
  * so it is trivially testable against a recorded fixture. `raw` is `unknown` (untyped
  * upstream data); an implementation narrows it internally and never leaks `any` outward.
+ * `sourceVersion`/`providerResourceId` are optional pure extractors (ADR-0014): implement one
+ * only when the provider's response genuinely exposes that signal; the client never guesses.
  */
 export interface CapabilityHandler<Q, R> {
   /** Builds the request URL for a query. Pure. */
@@ -75,6 +78,10 @@ export interface CapabilityHandler<Q, R> {
   readonly useProxy?: boolean
   /** Extra request headers (e.g. an auth token derived from `ctx.credentials`). */
   readonly headers?: (ctx: AdapterContext) => Record<string, string>
+  /** Extracts a trustworthy provider-exposed version marker, when one exists. Pure. */
+  readonly sourceVersion?: (raw: unknown, q: Q, ctx: AdapterContext) => string | undefined
+  /** Extracts the provider's own id for this specific resource, when one exists. Pure. */
+  readonly providerResourceId?: (raw: unknown, q: Q, ctx: AdapterContext) => string | undefined
 }
 
 /**
@@ -85,7 +92,7 @@ export interface CapabilityHandler<Q, R> {
 export interface Adapter {
   /** Unique, stable, snake_case identifier, e.g. `'alquran_cloud'`. */
   readonly id: string
-  /** Human-readable provider name, surfaced as a result's `source`. */
+  /** Human-readable provider name, used in {@link Provenance.provider}. */
   readonly name: string
   /** Provider homepage, for docs and diagnostics. */
   readonly homepage?: string
@@ -101,6 +108,6 @@ export interface Adapter {
   readonly audio?: CapabilityHandler<AudioQuery, UnifiedAudio>
   /** Translation handler, present when `capabilities` includes `'translation'`. */
   readonly translation?: CapabilityHandler<TranslationQuery, UnifiedTranslation>
-  /** Tafsir handler, present when `capabilities` includes `'tafsir'`. */
-  readonly tafsir?: CapabilityHandler<TafsirQuery, UnifiedTafsir>
+  /** Exegesis handler, present when `capabilities` includes `'exegesis'`. */
+  readonly exegesis?: CapabilityHandler<ExegesisQuery, UnifiedExegesis>
 }
