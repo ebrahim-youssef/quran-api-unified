@@ -7,10 +7,10 @@ import type { FetchLike } from '../../src/core/http.js'
 import type { Adapter, AuthKind, Capability, CapabilityHandler } from '../../src/ports/adapter.js'
 import type {
   AudioQuery,
-  TafsirQuery,
+  ExegesisQuery,
   TranslationQuery,
   UnifiedAudio,
-  UnifiedTafsir,
+  UnifiedExegesis,
   UnifiedTranslation,
   UnifiedVerse,
   VerseQuery,
@@ -23,11 +23,11 @@ function textHandler(id: string): CapabilityHandler<VerseQuery, UnifiedVerse> {
   return {
     buildUrl: () => url(id, 'text'),
     transform: (raw, q) => ({
-      key: `${q.surah}:${q.ayah ?? 1}`,
-      surah: q.surah,
-      ayah: q.ayah ?? 1,
-      source: id,
+      key: `${q.chapter}:${q.verse ?? 1}`,
+      chapter: q.chapter,
+      verse: q.verse ?? 1,
       text: (raw as { text: string }).text,
+      structure: { part: 1, group: 1, quarter: 1 },
     }),
   }
 }
@@ -36,11 +36,10 @@ function audioHandler(id: string): CapabilityHandler<AudioQuery, UnifiedAudio> {
   return {
     buildUrl: () => url(id, 'audio'),
     transform: (raw, q) => ({
-      key: `${q.surah}:${q.ayah ?? 1}`,
-      surah: q.surah,
-      ayah: q.ayah ?? 1,
-      scope: 'ayah',
-      source: id,
+      key: `${q.chapter}:${q.verse ?? 1}`,
+      chapter: q.chapter,
+      verse: q.verse ?? 1,
+      scope: 'verse',
       reciter: q.reciter ?? 'default',
       url: (raw as { url: string }).url,
       format: 'mp3',
@@ -52,10 +51,9 @@ function translationHandler(id: string): CapabilityHandler<TranslationQuery, Uni
   return {
     buildUrl: () => url(id, 'translation'),
     transform: (raw, q) => ({
-      key: `${q.surah}:${q.ayah ?? 1}`,
-      surah: q.surah,
-      ayah: q.ayah ?? 1,
-      source: id,
+      key: `${q.chapter}:${q.verse ?? 1}`,
+      chapter: q.chapter,
+      verse: q.verse ?? 1,
       edition: q.edition ?? 'default',
       language: 'en',
       text: (raw as { text: string }).text,
@@ -63,15 +61,14 @@ function translationHandler(id: string): CapabilityHandler<TranslationQuery, Uni
   }
 }
 
-function tafsirHandler(id: string): CapabilityHandler<TafsirQuery, UnifiedTafsir> {
+function exegesisHandler(id: string): CapabilityHandler<ExegesisQuery, UnifiedExegesis> {
   return {
-    buildUrl: () => url(id, 'tafsir'),
+    buildUrl: () => url(id, 'exegesis'),
     transform: (raw, q) => ({
-      key: `${q.surah}:${q.ayah ?? 1}`,
-      surah: q.surah,
-      ayah: q.ayah ?? 1,
-      source: id,
-      tafsirId: q.tafsirId ?? 'default',
+      key: `${q.chapter}:${q.verse ?? 1}`,
+      chapter: q.chapter,
+      verse: q.verse ?? 1,
+      exegesisId: q.exegesisId ?? 'default',
       text: (raw as { text: string }).text,
     }),
   }
@@ -91,7 +88,7 @@ export function makeAdapter(
     ...(capabilities.includes('text') ? { text: textHandler(id) } : {}),
     ...(capabilities.includes('audio') ? { audio: audioHandler(id) } : {}),
     ...(capabilities.includes('translation') ? { translation: translationHandler(id) } : {}),
-    ...(capabilities.includes('tafsir') ? { tafsir: tafsirHandler(id) } : {}),
+    ...(capabilities.includes('exegesis') ? { exegesis: exegesisHandler(id) } : {}),
   }
 }
 
