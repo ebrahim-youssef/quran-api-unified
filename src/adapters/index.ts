@@ -1,6 +1,6 @@
 /**
  * Registry of built-in provider adapters. Populated as adapters land in later tickets
- * (text, audio, translation, tafsir). Kept as a typed empty tuple for now so the public
+ * (text, audio, translation, exegesis). Kept as a typed empty tuple for now so the public
  * surface and the composition root can already reference it.
  *
  * Import boundary: adapters are declarative (a `buildUrl` recipe + a pure `transform`).
@@ -13,7 +13,7 @@ import { quranApiEdge } from './quran-api-edge.js'
 import { quranHub } from './quran-hub.js'
 import { quranFinder } from './quran-finder.js'
 import { quranFoundation } from './quran-foundation.js'
-import { spa5kTafsir } from './spa5k-tafsir.js'
+import { spa5kExegesis } from './spa5k-exegesis.js'
 
 /**
  * The built-in provider adapters, in default preference order. Auto-selection tries them in
@@ -26,5 +26,5 @@ export const builtinAdapters: readonly Adapter[] = [
   quranHub,
   quranFinder,
   quranFoundation,
-  spa5kTafsir,
+  spa5kExegesis,
 ]
