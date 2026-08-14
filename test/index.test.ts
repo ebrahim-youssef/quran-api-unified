@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { VERSION } from '../src/index.js'
+import { SCHEMA_VERSION } from '../src/index.js'
 
-describe('skeleton', () => {
-  it('exposes a VERSION marker on the public surface', () => {
-    expect(VERSION).toBe('0.0.0')
+describe('public surface', () => {
+  it('exposes the current SCHEMA_VERSION', () => {
+    expect(SCHEMA_VERSION).toBe('0.3.0')
   })
 })
