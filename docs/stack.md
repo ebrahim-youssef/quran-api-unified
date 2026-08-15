@@ -56,8 +56,9 @@ optional, imported only from the `./zod` entry.
   /core
     compose.ts        — single-call fan-out per concern + merge → one unified result (PURE)
     select.ts         — per-concern ordered preference + fallback chain (PURE; strategy pluggable)
-    schema.ts         — Unified{Verse,Audio,Translation,Tafsir} + merged result types
-    result.ts         — typed Result union + attempt-trail helpers
+    schema.ts         — Unified{Verse,Audio,Translation,Exegesis} + merged result types
+    identity.ts       — provenance + bilingual resource identity primitives
+    result.ts         — typed Result/Outcome unions + schema-versioned provenance + attempt trails
     errors.ts         — typed error values (config / adapter-not-found / provider / all-failed)
     http.ts           — the ONLY I/O: fetch wrapper (timeout, proxy, json/text, injectable fetch)
     constants.ts      — base URLs, default timeout, proxy URL, retry counts (no magic values)
@@ -67,6 +68,7 @@ optional, imported only from the `./zod` entry.
     index.ts          — builtinAdapters registry
     quran-foundation.ts alquran-cloud.ts quran-api-edge.ts quran-hub.ts quran-finder.ts …
                       — one file per provider (kebab-case name; snake_case `id` inside)
+  /registries         — planned read-only Quran structure / word-alignment data (v0.3 backlog item 5)
   /validation
     index.ts          — OPTIONAL zod entry, published as 'quran-api-unified/zod'
     schema.ts
@@ -84,13 +86,14 @@ optional, imported only from the `./zod` entry.
 
 | Module | May import | Hard no |
 | --- | --- | --- |
-| `core/schema.ts`, `core/result.ts`, `core/errors.ts` | types only, each other | anything that does I/O |
+| `core/schema.ts`, `core/result.ts`, `core/errors.ts`, `core/identity.ts` | types only, each other; `core/result.ts` may read `SCHEMA_VERSION` | anything that does I/O |
 | `core/constants.ts` | nothing | everything |
 | `core/http.ts` | `core/{errors,constants}`, `ports` | `adapters/*`, `core/{compose,select}` (it is the I/O leaf) |
-| `core/compose.ts`, `core/select.ts` | `core/{schema,result,errors}`, `ports` | **`core/http.ts`** (NO I/O in pure logic), concrete `adapters/*` |
+| `core/compose.ts`, `core/select.ts` | `core/{schema,result,errors,identity}`, `ports`, planned `registries/*` | **`core/http.ts`** (NO I/O in pure logic), concrete `adapters/*` |
 | `ports/adapter.ts` | `core/schema` (types) | everything else |
 | `adapters/*` | `ports`, `core/{schema,constants}` | **`core/http.ts`** (adapters *describe* calls, they never fetch), `client.ts` |
-| `client.ts` (composition root) | `core/*`, `ports`, `adapters/index` | — (the sole place that wires `http` + adapters) |
+| `registries/*` *(planned; not shipped yet)* | read-only static data and `core` types | **`core/http.ts`**, adapters, client, or any I/O |
+| `client.ts` (composition root) | `core/*`, `ports`, `adapters/index`, planned `registries/*` | — (the sole place that wires `http` + adapters) |
 | `validation/*` | `core/schema` (types), `zod` | `core/http`, `adapters/*` |
 | `index.ts` | `client`, `adapters/index`, `core` types/errors | — |
 
@@ -99,38 +102,51 @@ result}`) must never import `core/http.ts`. Adapters are *declarative* — a `bu
 recipe + a pure `transform`. The client's fetch layer is the only code that touches the
 network. This is the library equivalent of the app rule `logic.ts ↛ db.ts`.
 
+`registries/*` is the designed boundary for the deferred v0.3 static-data layer; the directory
+does not exist in the shipped source yet.
+
 ## 3. Canonical code patterns
 
 **The Adapter port** (`ports/adapter.ts`) — every provider implements this; capabilities
 declare which concerns it serves:
 
 ```ts
-export type Capability = 'text' | 'audio' | 'translation' | 'tafsir'
+export type Capability = 'text' | 'audio' | 'translation' | 'exegesis'
 export type ResponseType = 'json' | 'text'
+export type AuthKind = 'none' | 'apiKey' | 'oauth2-client'
 
 export interface AdapterContext {
-  credentials?: Record<string, string>     // supplied per-adapter by the caller (keyless by default)
-  proxy?: (url: string) => string          // CORS proxy wrapper, if configured
+  readonly credentials?: Readonly<Record<string, string>>
+  readonly proxy?: (url: string) => string
+  readonly accessToken?: string             // injected for oauth2-client adapters
+}
+
+export interface OAuth2ClientConfig {
+  readonly tokenUrl: string
+  readonly scope?: string
 }
 
 export interface CapabilityHandler<Q, R> {
-  buildUrl: (q: Q, ctx: AdapterContext) => string
-  transform: (raw: any, q: Q, ctx: AdapterContext) => R   // PURE — no I/O, no Date.now()
-  responseType?: ResponseType               // default 'json'
-  useProxy?: boolean                        // route through ctx.proxy when present
-  headers?: (ctx: AdapterContext) => Record<string, string>
+  readonly buildUrl: (q: Q, ctx: AdapterContext) => string
+  readonly transform: (raw: unknown, q: Q, ctx: AdapterContext) => R // PURE — no I/O, no Date.now()
+  readonly responseType?: ResponseType       // default 'json'
+  readonly useProxy?: boolean                // route through ctx.proxy when present
+  readonly headers?: (ctx: AdapterContext) => Record<string, string>
+  readonly sourceVersion?: (raw: unknown, q: Q, ctx: AdapterContext) => string | undefined
+  readonly providerResourceId?: (raw: unknown, q: Q, ctx: AdapterContext) => string | undefined
 }
 
 export interface Adapter {
-  id: string                                // snake_case, unique, e.g. 'alquran_cloud'
-  name: string
-  homepage?: string
-  capabilities: Capability[]
-  auth?: 'none' | 'apiKey' | 'oauth2-client'  // credential requirement; default 'none'
-  text?: CapabilityHandler<VerseQuery, UnifiedVerse>
-  audio?: CapabilityHandler<AudioQuery, UnifiedAudio>
-  translation?: CapabilityHandler<TranslationQuery, UnifiedTranslation>
-  tafsir?: CapabilityHandler<TafsirQuery, UnifiedTafsir>
+  readonly id: string                        // snake_case, unique, e.g. 'alquran_cloud'
+  readonly name: string
+  readonly homepage?: string
+  readonly capabilities: readonly Capability[]
+  readonly auth?: AuthKind                   // default 'none'
+  readonly oauth2?: OAuth2ClientConfig
+  readonly text?: CapabilityHandler<VerseQuery, UnifiedVerse>
+  readonly audio?: CapabilityHandler<AudioQuery, UnifiedAudio>
+  readonly translation?: CapabilityHandler<TranslationQuery, UnifiedTranslation>
+  readonly exegesis?: CapabilityHandler<ExegesisQuery, UnifiedExegesis>
 }
 ```
 
@@ -138,8 +154,44 @@ export interface Adapter {
 
 ```ts
 import type { Adapter } from '../ports/adapter.js'
+import type { StructuralPosition } from '../core/schema.js'
+import { verseKey } from './shared.js'
 
 const ALQURAN_CLOUD_BASE = 'https://api.alquran.cloud/v1' // adapter-private, not core/constants.js
+const DEFAULT_RECITER = 'ar.alafasy'
+const DEFAULT_TRANSLATION = 'en.sahih'
+
+interface AqcAyahResponse {
+  readonly data: {
+    readonly number: number
+    readonly text: string
+    readonly numberInSurah: number
+    readonly juz?: number
+    readonly page?: number
+    readonly surah: { readonly number: number; readonly name?: string }
+  }
+}
+interface AqcAudioResponse {
+  readonly data: {
+    readonly numberInSurah: number
+    readonly surah: { readonly number: number }
+    readonly audio: string
+    readonly audioSecondary?: readonly string[]
+    readonly edition?: { readonly identifier?: string }
+  }
+}
+interface AqcTranslationResponse {
+  readonly data: {
+    readonly text: string
+    readonly numberInSurah: number
+    readonly surah: { readonly number: number }
+    readonly edition?: { readonly identifier?: string; readonly language?: string }
+  }
+}
+
+function placeholderStructure(): StructuralPosition {
+  return { part: 1, group: 1, quarter: 1 }
+}
 
 export const alquranCloud: Adapter = {
   id: 'alquran_cloud',
@@ -148,44 +200,78 @@ export const alquranCloud: Adapter = {
   capabilities: ['text', 'audio', 'translation'],
   auth: 'none',
   text: {
-    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${q.surah}:${q.ayah}`,
-    transform: (raw) => ({
-      key: `${raw.data.surah.number}:${raw.data.numberInSurah}`,
-      id: raw.data.number,
-      source: 'Al-Quran Cloud',
-      text: raw.data.text,
-      meta: { juz: raw.data.juz, page: raw.data.page },
-    }),
+    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}`,
+    transform: (raw) => {
+      const { data } = raw as AqcAyahResponse
+      return {
+        key: verseKey(data.surah.number, data.numberInSurah),
+        chapter: data.surah.number, verse: data.numberInSurah,
+        text: data.text.trim(), structure: placeholderStructure(),
+        ...(data.page != null ? { meta: { page: data.page } } : {}),
+      }
+    },
   },
   audio: {
-    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${q.surah}:${q.ayah}/${q.reciter ?? 'ar.alafasy'}`,
-    transform: (raw, q) => ({
-      key: `${raw.data.surah.number}:${raw.data.numberInSurah}`,
-      surah: raw.data.surah.number, ayah: raw.data.numberInSurah, scope: 'ayah',
-      source: 'Al-Quran Cloud', reciter: q.reciter ?? 'ar.alafasy',
-      url: raw.data.audio, format: 'mp3', meta: { audioSecondary: raw.data.audioSecondary },
-    }),
+    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}/${q.reciter ?? DEFAULT_RECITER}`,
+    transform: (raw, q) => {
+      const { data } = raw as AqcAudioResponse
+      return {
+        key: verseKey(data.surah.number, data.numberInSurah),
+        chapter: data.surah.number, verse: data.numberInSurah, scope: 'verse',
+        reciter: data.edition?.identifier ?? q.reciter ?? DEFAULT_RECITER,
+        url: data.audio, format: 'mp3',
+      }
+    },
   },
-  // translation: { … edition-based, e.g. q.edition ?? 'en.sahih' … }
+  translation: {
+    buildUrl: (q) => `${ALQURAN_CLOUD_BASE}/ayah/${verseKey(q.chapter, q.verse)}/${q.edition ?? DEFAULT_TRANSLATION}`,
+    transform: (raw, q) => {
+      const { data } = raw as AqcTranslationResponse
+      return {
+        key: verseKey(data.surah.number, data.numberInSurah),
+        chapter: data.surah.number, verse: data.numberInSurah,
+        edition: data.edition?.identifier ?? q.edition ?? DEFAULT_TRANSLATION,
+        language: data.edition?.language ?? 'en', text: data.text.trim(),
+      }
+    },
+  },
 }
 ```
 
 **The I/O leaf** (`core/http.ts`) — the only place that fetches:
 
 ```ts
-export interface HttpDeps { fetchImpl: FetchLike; timeoutMs: number }
+export interface HttpDeps {
+  readonly fetchImpl: FetchLike
+  readonly timeoutMs: number
+}
+
+export interface HttpRequest {
+  readonly responseType?: ResponseType
+  readonly headers?: Record<string, string>
+  readonly method?: string
+  readonly body?: string
+}
 
 export async function httpFetch(
   url: string,
-  { fetchImpl, timeoutMs }: HttpDeps,
-  opts: { responseType?: ResponseType; headers?: Record<string, string> } = {},
-): Promise<unknown> {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  deps: HttpDeps,
+  opts: HttpRequest = {},
+): Promise<Result<unknown, QuranError>> {
+  const { fetchImpl, timeoutMs } = deps
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const res = await fetchImpl(url, { headers: opts.headers, signal: ctrl.signal })
-    if (!res.ok) throw new ProviderHttpError(res.status, res.statusText)
-    return opts.responseType === 'text' ? await res.text() : await res.json()
+    const res = await fetchImpl(url, requestInit(opts, controller.signal))
+    if (!res.ok) return { ok: false, error: createError('provider_http', `HTTP ${res.status} from ${url}`) }
+    try {
+      const value = opts.responseType === 'text' ? await res.text() : await res.json()
+      return { ok: true, value }
+    } catch (cause) {
+      return parseErrorResult(url, opts.responseType, cause)
+    }
+  } catch (cause) {
+    return networkErrorResult(url, timeoutMs, controller.signal.aborted, cause)
   } finally {
     clearTimeout(timer)
   }
@@ -195,32 +281,59 @@ export async function httpFetch(
 **The client factory** (`client.ts`) — functions only, no classes; deps injected:
 
 ```ts
-export function createQuranClient(options: ClientOptions = {}) {
+export interface ClientOptions {
+  readonly fetch?: FetchLike
+  readonly timeoutMs?: number
+  readonly proxy?: ProxyOption
+  readonly adapters?: readonly Adapter[]
+  readonly useBuiltins?: boolean
+  readonly credentials?: Readonly<Record<string, Readonly<Record<string, string>>>>
+}
+
+export interface GetRequest {
+  readonly ref: Ref
+  readonly include: readonly Capability[]
+  readonly reciter?: string
+  readonly textEdition?: string
+  readonly edition?: string
+  readonly exegesisId?: string
+  readonly source?: Partial<Record<Capability, SourceSelection>>
+  readonly includeRaw?: boolean
+}
+
+export interface QuranClient {
+  get(req: GetRequest): Promise<GetResult>
+  listAdapters(capability?: Capability): readonly Adapter[]
+  registerAdapter(adapter: Adapter): QuranClient
+}
+
+export function createQuranClient(options: ClientOptions = {}): QuranClient {
   const fetchImpl = options.fetch ?? globalThis.fetch
-  if (!fetchImpl) throw new ConfigurationError('No fetch available; pass options.fetch')
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  const proxy = resolveProxy(options.proxy)                     // string | fn | false → fn | undefined
+  if (typeof fetchImpl !== 'function') {
+    throwQuranError(createError('configuration', 'No fetch implementation available; pass options.fetch'))
+  }
+  const deps: HttpDeps = { fetchImpl, timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS }
+  const proxy = resolveProxy(options.proxy)
 
-  const registry = new Map(builtinAdapters.map((a) => [a.id, a]))
-  for (const a of options.adapters ?? []) registry.set(a.id, a)
+  const base = options.useBuiltins === false ? [] : builtinAdapters
+  const registry = new Map<string, Adapter>(base.map((a) => [a.id, a]))
+  for (const adapter of options.adapters ?? []) registry.set(adapter.id, adapter)
 
-  function registerAdapter(a: Adapter) { registry.set(a.id, a); return api }
-  function listAdapters(capability?: Capability) { /* … */ }
+  function registerAdapter(adapter: Adapter): QuranClient { registry.set(adapter.id, adapter); return api }
+  function listAdapters(capability?: Capability): readonly Adapter[] { /* current registry snapshot */ }
 
   async function get(req: GetRequest): Promise<GetResult> {
-    // for each concern in req.include: select() an ordered candidate list, then race the
-    // ordered fallback chain via httpFetch → adapter.transform; concerns fan out in parallel.
-    // Returns { ok:true, value:{ parts… }, attempts } even if some concerns are unfulfilled;
-    // { ok:false, error, attempts } only for misuse or total inability.
+    // select() an ordered fallback chain for each concern; httpFetch → adapter.transform;
+    // concerns fan out in parallel. Successful concern Outcomes carry provenance and the
+    // envelope carries SCHEMA_VERSION; one failed concern remains a partial success.
   }
 
   const api = { get, listAdapters, registerAdapter }
   return api
 }
 
-// convenience: a lazily-bound default client so callers can `import { get }` with zero setup
-let _default: ReturnType<typeof createQuranClient> | null = null
-export const get: typeof _default.get = (req) => (_default ??= createQuranClient()).get(req)
+let defaultClient: QuranClient | null = null
+export const get: QuranClient['get'] = (req) => (defaultClient ??= createQuranClient()).get(req)
 ```
 
 **Typed results** (`core/result.ts`) — errors are data, never thrown (except misuse):
@@ -228,23 +341,54 @@ export const get: typeof _default.get = (req) => (_default ??= createQuranClient
 ```ts
 export type Result<T, E = QuranError> = { ok: true; value: T } | { ok: false; error: E }
 
-export interface Part<T> {           // one concern's outcome inside a composed result
-  ok: boolean
-  value?: T
-  error?: QuranError
-  source?: string                    // adapter id that served it
-  attempts: Attempt[]                // every provider tried, in order
+export interface Outcome<T> {        // one concern's outcome inside a composed result
+  readonly ok: boolean
+  readonly schemaVersion: string
+  readonly value?: T
+  readonly error?: QuranError
+  readonly provenance?: Provenance
+  readonly raw?: unknown
+  readonly attempts: readonly Attempt[]
 }
 export interface Composed {
-  ref: Ref
-  text?: Part<UnifiedVerse>
-  audio?: Part<UnifiedAudio>
-  translation?: Part<UnifiedTranslation>
-  tafsir?: Part<UnifiedTafsir>
+  readonly ref: Ref
+  readonly text?: Outcome<UnifiedVerse>
+  readonly audio?: Outcome<UnifiedAudio>
+  readonly translation?: Outcome<UnifiedTranslation>
+  readonly exegesis?: Outcome<UnifiedExegesis>
 }
 export type GetResult =
-  | { ok: true;  value: Composed; attempts: Attempt[] }
-  | { ok: false; error: QuranError; attempts: Attempt[] }
+  | { readonly ok: true; readonly schemaVersion: string; readonly value: Composed; readonly attempts: readonly Attempt[] }
+  | { readonly ok: false; readonly schemaVersion: string; readonly error: QuranError; readonly attempts: readonly Attempt[] }
+
+export function okOutcome<T>(value: T, attempts: readonly Attempt[], provenance?: Provenance, raw?: unknown): Outcome<T> {
+  return { ok: true, schemaVersion: SCHEMA_VERSION, value, attempts,
+    ...(provenance ? { provenance } : {}), ...(raw === undefined ? {} : { raw }) }
+}
+export function errOutcome<T>(error: QuranError, attempts: readonly Attempt[]): Outcome<T> {
+  return { ok: false, schemaVersion: SCHEMA_VERSION, error, attempts }
+}
+```
+
+**Identity and provenance** (`core/identity.ts`) — provider facts stay on the `Outcome`, not
+on the normalized value:
+
+```ts
+export interface LocalizedName {
+  readonly ar: string
+  readonly en: string
+}
+export interface ResourceRef {
+  readonly id: string
+  readonly name: LocalizedName
+}
+export interface Provenance {
+  readonly provider: { readonly id: string; readonly name: string }
+  readonly providerResourceId?: string
+  readonly sourceUrl?: string
+  readonly sourceVersion?: string
+  readonly retrievedAt: string
+}
 ```
 
 **TypeScript** — strict; no `any` on the public surface; no `as` except narrowing from
