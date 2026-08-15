@@ -40,12 +40,12 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm pkg:check && pnpm
 export interface Adapter {
   id: string                    // snake_case, unique, e.g. 'alquran_cloud'
   name: string
-  capabilities: Capability[]    // 'text' | 'audio' | 'translation' | 'tafsir'
+  capabilities: Capability[]    // 'text' | 'audio' | 'translation' | 'exegesis'
   auth?: 'none' | 'apiKey' | 'oauth2-client'
   text?: CapabilityHandler<VerseQuery, UnifiedVerse>
   audio?: CapabilityHandler<AudioQuery, UnifiedAudio>
   translation?: CapabilityHandler<TranslationQuery, UnifiedTranslation>
-  tafsir?: CapabilityHandler<TafsirQuery, UnifiedTafsir>
+  exegesis?: CapabilityHandler<ExegesisQuery, UnifiedExegesis>
 }
 ```
 
